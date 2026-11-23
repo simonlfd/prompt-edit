@@ -117,7 +117,8 @@ php artisan test      # 355 Pest tests, including 240 delivery orderings
 
 ## Deploying (Laravel Cloud)
 
-1. Create the app from this repository with a database (Postgres or MySQL) and an **object storage bucket**.
+1. Create the app from this repository with a database (Postgres or MySQL) and a **private** object storage bucket.
+   Images are only ever served to their owner: the app checks ownership, then redirects to a 5-minute signed URL.
 2. Environment:
     - `PIXELFORGE_API_KEY` and `PIXELFORGE_WEBHOOK_SECRET` from a **separate** Pixelforge key for production
     - `QUEUE_CONNECTION=database`

@@ -21,8 +21,21 @@ class DownloadController extends Controller
         abort_unless($generation->user_id === $request->user()->id, 404);
 
         if ($generation->imageStored()) {
-            return Storage::disk(config('filesystems.images_disk'))
-                ->download($generation->image_path, $generation->downloadFilename(), ['Content-Type' => 'image/png']);
+            $disk = Storage::disk(config('filesystems.images_disk'));
+
+            // Private bucket: a short-lived signed URL that tells the browser to save it under our filename.
+            if (ImageController::usesSignedUrls()) {
+                return redirect()->away($disk->temporaryUrl(
+                    $generation->image_path,
+                    now()->addMinutes(ImageController::SIGNED_URL_MINUTES),
+                    [
+                        'ResponseContentType' => 'image/png',
+                        'ResponseContentDisposition' => 'attachment; filename="'.$generation->downloadFilename().'"',
+                    ],
+                ));
+            }
+
+            return $disk->download($generation->image_path, $generation->downloadFilename(), ['Content-Type' => 'image/png']);
         }
 
         if (! $generation->providerImageAvailable()) {

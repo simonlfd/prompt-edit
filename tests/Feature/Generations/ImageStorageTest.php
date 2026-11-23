@@ -89,3 +89,29 @@ it('backfills images the queue missed while Pixelforge’s link is still valid',
     Queue::assertPushed(StoreGenerationImage::class, fn ($job) => $job->generationId === $generation->id);
     expect($generation->status)->toBe(GenerationStatus::Succeeded);
 });
+
+it('redirects to a short-lived signed URL when images live in an S3 bucket', function () {
+    config([
+        'filesystems.disks.bucket' => [
+            'driver' => 's3', 'key' => 'k', 'secret' => 's', 'region' => 'auto',
+            'bucket' => 'images', 'endpoint' => 'https://bucket.example.test', 'use_path_style_endpoint' => true,
+        ],
+        'filesystems.images_disk' => 'bucket',
+    ]);
+    $generation = finishedGeneration($this);
+    $generation->forceFill(['image_path' => $generation->storagePath()])->save();
+
+    $image = $this->actingAs($generation->user)->get(route('generations.image', $generation));
+    $download = $this->actingAs($generation->user)->get(route('generations.download', $generation));
+
+    $image->assertRedirect();
+    expect($image->headers->get('Location'))
+        ->toStartWith('https://bucket.example.test/images/'.$generation->storagePath())
+        ->toContain('X-Amz-Signature=')
+        ->toContain('X-Amz-Expires=300');
+    expect(urldecode($download->headers->get('Location')))
+        ->toContain('attachment; filename="'.$generation->downloadFilename().'"');
+
+    // Still owner-only: strangers get a 404, not a signed URL.
+    $this->actingAs(User::factory()->create())->get(route('generations.image', $generation))->assertNotFound();
+});
