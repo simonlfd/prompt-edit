@@ -2,6 +2,7 @@
 
 use App\Console\Commands\CheckUsage;
 use App\Models\User;
+use App\Reports\OperationsTimeline;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -59,4 +60,24 @@ it('is quiet when everything matches', function () {
     $this->artisan('usage:check')->expectsOutputToContain('All days match')->assertSuccessful();
 
     Log::shouldNotHaveReceived('warning');
+});
+
+it('buckets the last 24 hours of outcomes and webhooks by hour', function () {
+    $this->travelTo('2026-11-23 15:40:00');
+    $ok = pendingGeneration();
+    $event = webhookEvent($ok, 'succeeded', 'evt_ok', ['completed_at' => '2026-11-23T15:10:00Z']);
+    sendWebhook($this, $event)->assertOk();
+    sendWebhook($this, $event)->assertOk(); // duplicate
+    $bad = pendingGeneration($ok->user);
+    sendWebhook($this, webhookEvent($bad, 'failed', 'evt_bad', ['completed_at' => '2026-11-23T13:05:00Z']))->assertOk();
+
+    $timeline = app(OperationsTimeline::class)->build();
+
+    expect($timeline['hours'])->toHaveCount(24)
+        ->and($timeline['hours'][23])->toBe('2026-11-23T15:00:00+00:00')
+        ->and($timeline['generations']['succeeded'][23])->toBe(1)
+        ->and($timeline['generations']['failed'][21])->toBe(1)
+        ->and(array_sum($timeline['generations']['failed']))->toBe(1)
+        ->and($timeline['webhooks']['applied'][23])->toBe(2)
+        ->and($timeline['webhooks']['duplicates'][23])->toBe(1);
 });

@@ -8,6 +8,7 @@ use App\Generations\GenerationStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Generation;
 use App\Models\WebhookEvent;
+use App\Reports\OperationsTimeline;
 use App\Reports\SpendReport;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Cache;
@@ -17,7 +18,7 @@ use Inertia\Response;
 /** What the integration is doing: webhook deliveries, retries, stuck work and cost reconciliation. */
 class OperationsController extends Controller
 {
-    public function __invoke(SpendReport $report): Response
+    public function __invoke(SpendReport $report, OperationsTimeline $timeline): Response
     {
         $since = now()->subDay();
         $recent = WebhookEvent::where('created_at', '>=', $since);
@@ -26,6 +27,7 @@ class OperationsController extends Controller
         $reconciliation = $report->build($today->subDays(6), $today);
 
         return Inertia::render('admin/Operations', [
+            'timeline' => $timeline->build(),
             'webhooks' => [
                 'received' => (clone $recent)->count(),
                 'duplicates_ignored' => (int) (clone $recent)->sum('duplicate_deliveries'),

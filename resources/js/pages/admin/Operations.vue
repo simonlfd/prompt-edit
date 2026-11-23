@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
+import { computed } from 'vue';
 import {
     CircleCheck,
     CircleX,
@@ -8,6 +9,8 @@ import {
     ShieldCheck,
     Webhook,
 } from '@lucide/vue';
+import RankedBars from '@/components/charts/RankedBars.vue';
+import StackedColumnChart from '@/components/charts/StackedColumnChart.vue';
 import Pagination from '@/components/Pagination.vue';
 import { formatUsdExact } from '@/lib/money';
 import { absoluteTime, relativeTime } from '@/lib/time';
@@ -33,7 +36,12 @@ type Event = {
     provider_generation_id: string | null;
 };
 
-defineProps<{
+const props = defineProps<{
+    timeline: {
+        hours: string[];
+        generations: { succeeded: number[]; failed: number[] };
+        webhooks: { applied: number[]; stale: number[]; duplicates: number[] };
+    };
     webhooks: {
         received: number;
         duplicates_ignored: number;
@@ -76,6 +84,92 @@ defineProps<{
 defineOptions({
     layout: { breadcrumbs: [{ title: 'Operations', href: operations() }] },
 });
+
+// ---- Charts -----------------------------------------------------------------
+const hourLabels = computed(() =>
+    props.timeline.hours.map((h) =>
+        new Date(h).toLocaleTimeString('en', {
+            hour: 'numeric',
+            timeZone: 'UTC',
+        }),
+    ),
+);
+const hourLong = computed(() =>
+    props.timeline.hours.map((h) => {
+        const from = new Date(h);
+        const to = new Date(from.getTime() + 3_600_000);
+        const fmt = (d: Date) =>
+            d.toLocaleTimeString('en', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false,
+                timeZone: 'UTC',
+            });
+
+        return `${from.toLocaleDateString('en', { month: 'short', day: 'numeric', timeZone: 'UTC' })}, ${fmt(from)}–${fmt(to)} UTC`;
+    }),
+);
+
+const outcomeSeries = computed(() => [
+    {
+        key: 'succeeded',
+        label: 'Succeeded',
+        color: 'var(--viz-1)',
+        values: props.timeline.generations.succeeded,
+    },
+    {
+        key: 'failed',
+        label: 'Failed (free)',
+        color: 'var(--viz-critical)',
+        values: props.timeline.generations.failed,
+    },
+]);
+
+const webhookSeries = computed(() => [
+    {
+        key: 'applied',
+        label: 'Applied',
+        color: 'var(--viz-1)',
+        values: props.timeline.webhooks.applied,
+    },
+    {
+        key: 'stale',
+        label: 'Out of order, ignored',
+        color: 'var(--viz-2)',
+        values: props.timeline.webhooks.stale,
+    },
+    {
+        key: 'duplicates',
+        label: 'Duplicates, ignored',
+        color: 'var(--viz-3)',
+        values: props.timeline.webhooks.duplicates,
+    },
+]);
+
+const count = (v: number) => v.toLocaleString();
+const successRate = (i: number) => {
+    const ok = props.timeline.generations.succeeded[i] ?? 0;
+    const total = ok + (props.timeline.generations.failed[i] ?? 0);
+
+    return total
+        ? [
+              {
+                  label: 'Success rate',
+                  value: `${Math.round((ok / total) * 100)}%`,
+              },
+          ]
+        : [];
+};
+
+const failureRows = computed(() =>
+    props.generations.failures.map((f) => ({
+        key: f.code ?? 'unknown',
+        label: f.message ?? 'Unknown',
+        sublabel: f.code ?? undefined,
+        value: f.count,
+        display: f.count.toLocaleString(),
+    })),
+);
 
 const outcomeStyle: Record<string, string> = {
     applied: 'bg-lime/15 text-foreground',
@@ -180,6 +274,45 @@ const outcomeLabel: Record<string, string> = {
                 </p>
             </div>
         </section>
+
+        <div class="grid gap-6 lg:grid-cols-2">
+            <section class="rounded-xl border bg-card p-4">
+                <h2 class="text-sm font-semibold">
+                    Generations finished per hour
+                </h2>
+                <p class="mb-3 text-xs text-muted-foreground">
+                    Last 24 hours, UTC. Failures cost users nothing.
+                </p>
+                <StackedColumnChart
+                    title="Generations finished per hour, succeeded and failed"
+                    :labels="hourLabels"
+                    :long-labels="hourLong"
+                    :series="outcomeSeries"
+                    :axis-format="count"
+                    :value-format="count"
+                    :extra-rows="successRate"
+                    :height="200"
+                />
+            </section>
+            <section class="rounded-xl border bg-card p-4">
+                <h2 class="text-sm font-semibold">
+                    Webhook deliveries per hour
+                </h2>
+                <p class="mb-3 text-xs text-muted-foreground">
+                    What we did with each delivery. Duplicates and out-of-order
+                    events change nothing.
+                </p>
+                <StackedColumnChart
+                    title="Webhook deliveries per hour by outcome"
+                    :labels="hourLabels"
+                    :long-labels="hourLong"
+                    :series="webhookSeries"
+                    :axis-format="count"
+                    :value-format="count"
+                    :height="200"
+                />
+            </section>
+        </div>
 
         <div class="grid gap-6 lg:grid-cols-2">
             <!-- Reconciliation -->
@@ -334,31 +467,12 @@ const outcomeLabel: Record<string, string> = {
                     <h3 class="mb-2 text-xs font-medium text-muted-foreground">
                         Failures in the last 24 hours (all free to users)
                     </h3>
-                    <p
-                        v-if="!generations.failures.length"
-                        class="text-sm text-muted-foreground"
-                    >
-                        None.
-                    </p>
-                    <ul v-else class="space-y-1.5 text-sm">
-                        <li
-                            v-for="f in generations.failures"
-                            :key="f.code ?? 'none'"
-                            class="flex items-start justify-between gap-3"
-                        >
-                            <span
-                                ><span class="font-mono text-xs">{{
-                                    f.code
-                                }}</span>
-                                <span class="text-muted-foreground"
-                                    >· {{ f.message }}</span
-                                ></span
-                            >
-                            <span class="font-mono tabular-nums">{{
-                                f.count
-                            }}</span>
-                        </li>
-                    </ul>
+                    <RankedBars
+                        title="Failures in the last 24 hours by reason"
+                        :rows="failureRows"
+                        color="var(--viz-critical)"
+                        empty="None."
+                    />
                 </div>
             </section>
         </div>

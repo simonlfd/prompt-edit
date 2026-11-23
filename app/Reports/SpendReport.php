@@ -10,6 +10,7 @@ use App\Pixelforge\PixelforgeException;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Facades\Cache;
 
 /**
@@ -63,6 +64,7 @@ class SpendReport
             'end_date' => $end->toDateString(),
             'days' => $days,
             'users' => $this->byUser($start, $end, $usersPage),
+            'top_users' => $this->topUsers($start, $end, 8),
             'total' => $this->present([...$total, 'pixelforge' => $pixelforgeTotal]),
             'pixelforge_available' => $usage !== null,
         ];
@@ -75,19 +77,45 @@ class SpendReport
      */
     private function byUser(CarbonImmutable $start, CarbonImmutable $end, int $page): LengthAwarePaginator
     {
+        return $this->userTotals($start, $end)
+            ->paginate(self::USERS_PER_PAGE, pageName: 'users_page', page: $page)
+            ->withQueryString()
+            ->through(fn ($row) => $this->presentUser($row));
+    }
+
+    /**
+     * The biggest spenders, for the chart.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function topUsers(CarbonImmutable $start, CarbonImmutable $end, int $limit): array
+    {
+        return $this->userTotals($start, $end)
+            ->limit($limit)
+            ->get()
+            ->map(fn ($row) => $this->presentUser($row))
+            ->values()
+            ->all();
+    }
+
+    private function userTotals(CarbonImmutable $start, CarbonImmutable $end): QueryBuilder
+    {
         return $this->succeededBetween($start, $end)
             ->toBase()
             ->join('users', 'users.id', '=', 'generations.user_id')
             ->selectRaw('users.id, users.name, users.email, COUNT(*) as generations, SUM(actual_charge_nanos) as charged, SUM(actual_provider_nanos) as provider')
             ->groupBy('users.id', 'users.name', 'users.email')
             ->orderByRaw('SUM(actual_charge_nanos) DESC')
-            ->orderBy('users.id')
-            ->paginate(self::USERS_PER_PAGE, pageName: 'users_page', page: $page)
-            ->withQueryString()
-            ->through(fn ($row) => $this->present([
-                'user' => ['id' => (int) $row->id, 'name' => $row->name, 'email' => $row->email],
-                ...$this->totals($row),
-            ]));
+            ->orderBy('users.id');
+    }
+
+    /** @return array<string, mixed> */
+    private function presentUser(\stdClass $row): array
+    {
+        return $this->present([
+            'user' => ['id' => (int) $row->id, 'name' => $row->name, 'email' => $row->email],
+            ...$this->totals($row),
+        ]);
     }
 
     /** @return Builder<Generation> */

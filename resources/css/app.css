@@ -126,6 +126,15 @@
     --sidebar-accent-foreground: #262626;
     --sidebar-border: #e5e5e5;
     --sidebar-ring: var(--studio-accent-vivid);
+
+    /* Data viz: validated with the dataviz skill's palette checker against #ffffff
+       (categorical 1-3 pass CVD/normal-vision gates; aqua < 3:1, so every chart has a table view). */
+    --viz-1: #2a78d6;
+    --viz-2: #eb6834;
+    --viz-3: #1baf7a;
+    --viz-critical: #d03b3b;
+    --viz-grid: #ecebe7;
+    --viz-axis: #c3c2b7;
 }
 
 .dark {
@@ -167,6 +176,14 @@
     --sidebar-accent-foreground: #ffffff;
     --sidebar-border: #ffffff1a;
     --sidebar-ring: var(--studio-accent);
+
+    /* Dark steps of the same hues, validated against #262626. */
+    --viz-1: #3987e5;
+    --viz-2: #d95926;
+    --viz-3: #199e70;
+    --viz-critical: #d03b3b;
+    --viz-grid: #333331;
+    --viz-axis: #4a4a47;
 }
 
 @layer base {

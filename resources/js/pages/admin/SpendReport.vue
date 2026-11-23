@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
 import { CircleCheck, CircleX } from '@lucide/vue';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
+import RankedBars from '@/components/charts/RankedBars.vue';
+import StackedColumnChart from '@/components/charts/StackedColumnChart.vue';
 import Pagination from '@/components/Pagination.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { formatUsdExact, isNegative } from '@/lib/money';
+import { formatUsd, formatUsdExact, isNegative } from '@/lib/money';
 import { report as reportRoute } from '@/routes/admin';
 
 type Row = {
@@ -35,6 +37,9 @@ const props = defineProps<{
             to: number | null;
         };
         total: Row;
+        top_users: (Row & {
+            user: { id: number; name: string; email: string };
+        })[];
         pixelforge_available: boolean;
     };
 }>();
@@ -57,6 +62,77 @@ function apply() {
 }
 
 const money = (value: string) => formatUsdExact(value).replace(/^(-?\$)/, '$1');
+
+// ---- Charts (numbers are for geometry only; every figure shown is formatted from the exact strings) ----
+const chronological = computed(() => [...props.report.days].reverse());
+const dayLabel = (date: string) =>
+    new Date(`${date}T00:00:00Z`).toLocaleDateString('en', {
+        month: 'short',
+        day: 'numeric',
+        timeZone: 'UTC',
+    });
+const toNumber = (decimal: string) => Math.max(0, Number(decimal));
+
+const dailySeries = computed(() => [
+    {
+        key: 'cost',
+        label: 'Pixelforge’s cost',
+        color: 'var(--viz-1)',
+        values: chronological.value.map((d) => toNumber(d.provider_cost)),
+    },
+    {
+        key: 'margin',
+        label: 'Our margin',
+        color: 'var(--viz-2)',
+        values: chronological.value.map((d) => toNumber(d.profit)),
+    },
+]);
+
+function dailyValue(_: number, key: string, i: number): string {
+    const day = chronological.value[i];
+
+    return formatUsd(key === 'cost' ? day.provider_cost : day.profit);
+}
+
+function dailyExtra(i: number) {
+    const day = chronological.value[i];
+    const rows = [
+        {
+            label: `Charged (${day.generations} image${day.generations === 1 ? '' : 's'})`,
+            value: formatUsd(day.charged),
+        },
+    ];
+
+    if (day.matches_pixelforge !== null && day.pixelforge) {
+        rows.push({
+            label: 'Pixelforge /v1/usage',
+            value: day.matches_pixelforge
+                ? '✓ matches'
+                : `✗ ${formatUsd(day.pixelforge.cost)}`,
+        });
+    }
+
+    return rows;
+}
+
+const compactUsd = (v: number) =>
+    v === 0
+        ? '$0'
+        : v < 0.01
+          ? `$${v.toFixed(3)}`
+          : v < 10
+            ? `$${v.toFixed(2)}`
+            : `$${Math.round(v).toLocaleString()}`;
+
+const topSpenders = computed(() =>
+    props.report.top_users.map((row) => ({
+        key: row.user.id,
+        label: row.user.name,
+        sublabel: `${row.generations} image${row.generations === 1 ? '' : 's'}`,
+        value: toNumber(row.charged),
+        display: formatUsd(row.charged),
+    })),
+);
 </script>
 
 <template>
@@ -135,6 +211,36 @@ const money = (value: string) => formatUsdExact(value).replace(/^(-?\$)/, '$1');
                     {{ money(report.total.profit) }}
                 </p>
             </div>
+        </div>
+
+        <div class="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+            <section class="rounded-xl border bg-card p-4">
+                <h2 class="text-sm font-semibold">Charged per day</h2>
+                <p class="mb-3 text-xs text-muted-foreground">
+                    Each column is what users paid: Pixelforge’s cost plus our
+                    25% margin. UTC days, by completion.
+                </p>
+                <StackedColumnChart
+                    title="Charged per day, split into Pixelforge’s cost and our margin"
+                    :labels="chronological.map((d) => dayLabel(d.date))"
+                    :long-labels="chronological.map((d) => d.date)"
+                    :series="dailySeries"
+                    :axis-format="compactUsd"
+                    :value-format="dailyValue"
+                    :extra-rows="dailyExtra"
+                />
+            </section>
+            <section class="rounded-xl border bg-card p-4">
+                <h2 class="text-sm font-semibold">Top spenders</h2>
+                <p class="mb-4 text-xs text-muted-foreground">
+                    Charged in this period.
+                </p>
+                <RankedBars
+                    title="Top spenders by amount charged"
+                    :rows="topSpenders"
+                    empty="No completed generations in this period."
+                />
+            </section>
         </div>
 
         <section class="overflow-x-auto rounded-xl border bg-card">
