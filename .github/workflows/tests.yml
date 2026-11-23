@@ -11,6 +11,7 @@ permissions:
 
 jobs:
   ci:
+    name: Lint, types and tests
     runs-on: ubuntu-latest
 
     steps:
@@ -34,5 +35,15 @@ jobs:
       - name: Setup Application
         run: composer setup
 
-      - name: Run CI Checks
-        run: composer ci:check
+      - name: Lint and format (Pint, Oxlint, Prettier)
+        run: |
+          vendor/bin/pint --test
+          npm run check
+
+      - name: Types (PHPStan, vue-tsc)
+        run: |
+          vendor/bin/phpstan analyse --memory-limit=1G
+          npm run types:check
+
+      - name: Tests (Pest)
+        run: php artisan test
