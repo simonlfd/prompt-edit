@@ -27,7 +27,7 @@ class SpendReportController extends Controller
         }
 
         return Inertia::render('admin/SpendReport', [
-            'report' => $report->build($start->startOfDay(), $end->startOfDay()),
+            'report' => $report->build($start->startOfDay(), $end->startOfDay(), max(1, $request->integer('users_page', 1))),
         ]);
     }
 }

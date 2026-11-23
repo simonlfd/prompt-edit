@@ -3,6 +3,7 @@ import { Head, Link, router, usePoll } from '@inertiajs/vue3';
 import { ImagePlus, Star } from '@lucide/vue';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import GalleryLightbox from '@/components/gallery/GalleryLightbox.vue';
+import Pagination from '@/components/Pagination.vue';
 import GalleryTile from '@/components/gallery/GalleryTile.vue';
 import { Button } from '@/components/ui/button';
 import { useGenerationActions } from '@/composables/useGenerationActions';
@@ -182,35 +183,14 @@ onBeforeUnmount(() => clearInterval(clock));
                 @open="lightbox = i"
             />
         </div>
-
-        <nav
-            v-if="generations.meta.last_page > 1"
-            class="flex items-center justify-between gap-3 text-sm"
-            aria-label="Pagination"
-        >
-            <span class="text-muted-foreground">
-                {{ generations.meta.from }}–{{ generations.meta.to }} of
-                {{ generations.meta.total }}
-            </span>
-            <div class="flex gap-2">
-                <Button
-                    variant="outline"
-                    size="sm"
-                    :disabled="!generations.links.prev"
-                    @click="visit({ page: generations.meta.current_page - 1 })"
-                >
-                    Previous
-                </Button>
-                <Button
-                    variant="outline"
-                    size="sm"
-                    :disabled="!generations.links.next"
-                    @click="visit({ page: generations.meta.current_page + 1 })"
-                >
-                    Next
-                </Button>
-            </div>
-        </nav>
+        <Pagination
+            :current-page="generations.meta.current_page"
+            :last-page="generations.meta.last_page"
+            :total="generations.meta.total"
+            :from="generations.meta.from"
+            :to="generations.meta.to"
+            noun="images"
+        />
 
         <GalleryLightbox
             v-model:index="lightbox"

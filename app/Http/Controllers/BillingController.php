@@ -26,6 +26,7 @@ class BillingController extends Controller
             ->with('generation:id,prompt,status')
             ->latest('id')
             ->paginate(30)
+            ->withQueryString()
             ->through(fn (CreditTransaction $t) => [
                 'id' => $t->id,
                 'type' => $t->type,

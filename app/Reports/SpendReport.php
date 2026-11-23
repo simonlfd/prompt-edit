@@ -8,76 +8,103 @@ use App\Models\Generation;
 use App\Pixelforge\PixelforgeClient;
 use App\Pixelforge\PixelforgeException;
 use Carbon\CarbonImmutable;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Cache;
 
 /**
  * Credit spend, provider cost and profit per UTC day and per user.
  *
  * Days are the UTC day a generation *completed*, because that's how Pixelforge's GET /v1/usage buckets
- * costs. Only succeeded generations count (failed ones cost nothing on either side). Sums stay in exact
- * nanodollars, so our per-day provider cost should equal Pixelforge's cost_usd to the last digit.
+ * costs. Only succeeded generations count (failed ones cost nothing on either side). Sums are done in SQL
+ * over exact integer nanodollars, so they scale with the data and our per-day provider cost should equal
+ * Pixelforge's cost_usd to the last digit.
  */
 class SpendReport
 {
+    public const USERS_PER_PAGE = 25;
+
     public function __construct(private readonly PixelforgeClient $client) {}
 
     /** @return array<string, mixed> */
-    public function build(CarbonImmutable $start, CarbonImmutable $end): array
+    public function build(CarbonImmutable $start, CarbonImmutable $end, int $usersPage = 1): array
     {
-        $generations = Generation::query()
-            ->with('user:id,name,email')
-            ->where('status', GenerationStatus::Succeeded)
-            ->whereBetween('completed_at', [$start->startOfDay(), $end->endOfDay()])
-            ->get(['id', 'user_id', 'completed_at', 'actual_provider_nanos', 'actual_charge_nanos']);
+        $byDay = $this->succeededBetween($start, $end)
+            ->toBase()
+            ->selectRaw('DATE(completed_at) as day, COUNT(*) as generations, SUM(actual_charge_nanos) as charged, SUM(actual_provider_nanos) as provider')
+            ->groupBy('day')
+            ->get()
+            ->keyBy(fn ($row) => substr((string) $row->day, 0, 10));
 
         $usage = $this->providerUsage($start, $end);
 
         $days = [];
         for ($day = $end; $day->gte($start); $day = $day->subDay()) {
             $date = $day->toDateString();
-            $rows = $generations->filter(fn (Generation $g) => $g->completed_at->utc()->toDateString() === $date);
-            $days[] = [
+            $row = $byDay->get($date);
+            $days[] = $this->present([
                 'date' => $date,
-                ...$this->totals($rows),
+                ...$this->totals($row),
                 'pixelforge' => $usage[$date] ?? null,
-            ];
+            ]);
         }
 
-        $users = $generations->groupBy('user_id')->map(fn ($rows) => [
-            'user' => ['id' => $rows->first()->user->id, 'name' => $rows->first()->user->name, 'email' => $rows->first()->user->email],
-            ...$this->totals($rows),
-        ])->sortByDesc('charged_nanos')->values()->all();
-
-        $total = $this->totals($generations);
-        $pixelforgeTotal = $usage === null ? null : array_sum(array_map(fn ($d) => Money::nanosFromDecimal($d['cost']), $usage));
+        $total = $this->totals($this->succeededBetween($start, $end)
+            ->toBase()
+            ->selectRaw('COUNT(*) as generations, SUM(actual_charge_nanos) as charged, SUM(actual_provider_nanos) as provider')
+            ->first());
+        $pixelforgeTotal = $usage === null ? null : [
+            'generations' => array_sum(array_column($usage, 'generations')),
+            'cost' => Money::toDecimal(array_sum(array_map(fn ($d) => Money::nanosFromDecimal($d['cost']), $usage))),
+        ];
 
         return [
             'start_date' => $start->toDateString(),
             'end_date' => $end->toDateString(),
-            'days' => array_map(fn ($d) => $this->present($d), $days),
-            'users' => array_map(fn ($u) => $this->present($u), $users),
-            'total' => $this->present([
-                ...$total,
-                'pixelforge' => $pixelforgeTotal === null ? null : [
-                    'generations' => array_sum(array_column($usage, 'generations')),
-                    'cost' => Money::toDecimal($pixelforgeTotal),
-                ],
-            ]),
+            'days' => $days,
+            'users' => $this->byUser($start, $end, $usersPage),
+            'total' => $this->present([...$total, 'pixelforge' => $pixelforgeTotal]),
             'pixelforge_available' => $usage !== null,
         ];
     }
 
     /**
-     * @param  Collection<int, Generation>  $rows
-     * @return array{generations: int, charged_nanos: int, provider_nanos: int}
+     * Biggest spenders first, a page at a time.
+     *
+     * @return LengthAwarePaginator<int, array<string, mixed>>
      */
-    private function totals(Collection $rows): array
+    private function byUser(CarbonImmutable $start, CarbonImmutable $end, int $page): LengthAwarePaginator
+    {
+        return $this->succeededBetween($start, $end)
+            ->toBase()
+            ->join('users', 'users.id', '=', 'generations.user_id')
+            ->selectRaw('users.id, users.name, users.email, COUNT(*) as generations, SUM(actual_charge_nanos) as charged, SUM(actual_provider_nanos) as provider')
+            ->groupBy('users.id', 'users.name', 'users.email')
+            ->orderByRaw('SUM(actual_charge_nanos) DESC')
+            ->orderBy('users.id')
+            ->paginate(self::USERS_PER_PAGE, pageName: 'users_page', page: $page)
+            ->withQueryString()
+            ->through(fn ($row) => $this->present([
+                'user' => ['id' => (int) $row->id, 'name' => $row->name, 'email' => $row->email],
+                ...$this->totals($row),
+            ]));
+    }
+
+    /** @return Builder<Generation> */
+    private function succeededBetween(CarbonImmutable $start, CarbonImmutable $end): Builder
+    {
+        return Generation::query()
+            ->where('status', GenerationStatus::Succeeded)
+            ->whereBetween('completed_at', [$start->startOfDay(), $end->endOfDay()]);
+    }
+
+    /** @return array{generations: int, charged_nanos: int, provider_nanos: int} */
+    private function totals(?object $row): array
     {
         return [
-            'generations' => $rows->count(),
-            'charged_nanos' => (int) $rows->sum('actual_charge_nanos'),
-            'provider_nanos' => (int) $rows->sum('actual_provider_nanos'),
+            'generations' => (int) ($row->generations ?? 0),
+            'charged_nanos' => (int) ($row->charged ?? 0),
+            'provider_nanos' => (int) ($row->provider ?? 0),
         ];
     }
 

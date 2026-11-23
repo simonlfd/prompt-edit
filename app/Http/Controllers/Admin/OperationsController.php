@@ -64,7 +64,8 @@ class OperationsController extends Controller
                     'webhook_events.id', 'event_id', 'type', 'outcome', 'delivery_attempt', 'duplicate_deliveries',
                     'webhook_events.created_at', 'generations.prompt',
                     'webhook_events.provider_generation_id',
-                ]),
+                ])
+                ->withQueryString(),
         ]);
     }
 }

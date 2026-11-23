@@ -2,6 +2,7 @@
 import { Head, router } from '@inertiajs/vue3';
 import { CircleCheck, CircleX } from '@lucide/vue';
 import { ref } from 'vue';
+import Pagination from '@/components/Pagination.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,7 +23,17 @@ const props = defineProps<{
         start_date: string;
         end_date: string;
         days: (Row & { date: string })[];
-        users: (Row & { user: { id: number; name: string; email: string } })[];
+        // A Laravel length-aware paginator (biggest spenders first).
+        users: {
+            data: (Row & {
+                user: { id: number; name: string; email: string };
+            })[];
+            current_page: number;
+            last_page: number;
+            total: number;
+            from: number | null;
+            to: number | null;
+        };
         total: Row;
         pixelforge_available: boolean;
     };
@@ -232,7 +243,7 @@ const money = (value: string) => formatUsdExact(value).replace(/^(-?\$)/, '$1');
         <section class="overflow-x-auto rounded-xl border bg-card">
             <h2 class="border-b px-4 py-3 text-sm font-semibold">By user</h2>
             <p
-                v-if="!report.users.length"
+                v-if="!report.users.data.length"
                 class="px-4 py-6 text-sm text-muted-foreground"
             >
                 No completed generations in this period.
@@ -253,7 +264,7 @@ const money = (value: string) => formatUsdExact(value).replace(/^(-?\$)/, '$1');
                 </thead>
                 <tbody class="font-mono tabular-nums">
                     <tr
-                        v-for="row in report.users"
+                        v-for="row in report.users.data"
                         :key="row.user.id"
                         class="border-b last:border-0"
                     >
@@ -278,6 +289,17 @@ const money = (value: string) => formatUsdExact(value).replace(/^(-?\$)/, '$1');
                     </tr>
                 </tbody>
             </table>
+            <div v-if="report.users.total" class="border-t px-4 py-3">
+                <Pagination
+                    :current-page="report.users.current_page"
+                    :last-page="report.users.last_page"
+                    :total="report.users.total"
+                    :from="report.users.from"
+                    :to="report.users.to"
+                    page-name="users_page"
+                    noun="users"
+                />
+            </div>
         </section>
     </div>
 </template>

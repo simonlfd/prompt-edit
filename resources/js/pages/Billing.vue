@@ -2,6 +2,7 @@
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { ArrowDownLeft, ArrowUpRight, Lock, Unlock, Wallet } from '@lucide/vue';
 import { ref } from 'vue';
+import Pagination from '@/components/Pagination.vue';
 import BuyCreditsDialog from '@/components/studio/BuyCreditsDialog.vue';
 import { Button } from '@/components/ui/button';
 import { formatUsd, formatUsdExact, isNegative } from '@/lib/money';
@@ -30,8 +31,9 @@ defineProps<{
         data: Entry[];
         current_page: number;
         last_page: number;
-        prev_page_url: string | null;
-        next_page_url: string | null;
+        total: number;
+        from: number | null;
+        to: number | null;
     };
     credit_packs: number[];
 }>();
@@ -215,29 +217,16 @@ const kinds = {
                     </tr>
                 </tbody>
             </table>
-            <nav
-                v-if="entries.last_page > 1"
-                class="flex justify-end gap-3 border-t px-4 py-2 text-sm"
-            >
-                <Link
-                    v-if="entries.prev_page_url"
-                    :href="entries.prev_page_url"
-                    preserve-scroll
-                    class="text-accent-vivid hover:underline"
-                    >← Newer</Link
-                >
-                <span class="text-muted-foreground"
-                    >Page {{ entries.current_page }} of
-                    {{ entries.last_page }}</span
-                >
-                <Link
-                    v-if="entries.next_page_url"
-                    :href="entries.next_page_url"
-                    preserve-scroll
-                    class="text-accent-vivid hover:underline"
-                    >Older →</Link
-                >
-            </nav>
+            <div class="border-t px-4 py-3">
+                <Pagination
+                    :current-page="entries.current_page"
+                    :last-page="entries.last_page"
+                    :total="entries.total"
+                    :from="entries.from"
+                    :to="entries.to"
+                    noun="entries"
+                />
+            </div>
         </section>
 
         <BuyCreditsDialog v-model:open="buyOpen" :packs="credit_packs" />

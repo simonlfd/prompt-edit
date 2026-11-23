@@ -38,6 +38,7 @@ it('reports spend, provider cost and profit per completed UTC day and checks it 
             ->where('report.days.0.profit', '0.076377500')
             ->where('report.days.0.matches_pixelforge', true)
             ->where('report.days.1.matches_pixelforge', true)
-            ->where('report.users.0.user.id', $generation->user_id)
+            ->where('report.users.data.0.user.id', $generation->user_id)
+            ->where('report.users.total', 1)
             ->where('report.total.matches_pixelforge', true));
 });

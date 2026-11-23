@@ -8,6 +8,7 @@ import {
     ShieldCheck,
     Webhook,
 } from '@lucide/vue';
+import Pagination from '@/components/Pagination.vue';
 import { formatUsdExact } from '@/lib/money';
 import { absoluteTime, relativeTime } from '@/lib/time';
 import { operations, report } from '@/routes/admin';
@@ -66,8 +67,9 @@ defineProps<{
         data: Event[];
         current_page: number;
         last_page: number;
-        prev_page_url: string | null;
-        next_page_url: string | null;
+        total: number;
+        from: number | null;
+        to: number | null;
     };
 }>();
 
@@ -440,29 +442,16 @@ const outcomeLabel: Record<string, string> = {
                     </tr>
                 </tbody>
             </table>
-            <nav
-                v-if="events.last_page > 1"
-                class="flex justify-end gap-3 border-t px-4 py-2 text-sm"
-            >
-                <Link
-                    v-if="events.prev_page_url"
-                    :href="events.prev_page_url"
-                    preserve-scroll
-                    class="text-accent-vivid hover:underline"
-                    >← Newer</Link
-                >
-                <span class="text-muted-foreground"
-                    >Page {{ events.current_page }} of
-                    {{ events.last_page }}</span
-                >
-                <Link
-                    v-if="events.next_page_url"
-                    :href="events.next_page_url"
-                    preserve-scroll
-                    class="text-accent-vivid hover:underline"
-                    >Older →</Link
-                >
-            </nav>
+            <div class="border-t px-4 py-3">
+                <Pagination
+                    :current-page="events.current_page"
+                    :last-page="events.last_page"
+                    :total="events.total"
+                    :from="events.from"
+                    :to="events.to"
+                    noun="events"
+                />
+            </div>
         </section>
     </div>
 </template>
