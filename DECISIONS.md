@@ -105,16 +105,48 @@ Delivery isn't guaranteed. `generations:reconcile` runs every minute (Laravel sc
 
 - Live status uses Inertia polling every 2.5 seconds, only while something is in flight. It reloads just
   `generations` and `balance`. This is simpler and more robust than websockets for this scale.
-- Image URLs expire after 24 hours, which the brief allows. The card then shows "Image link expired" instead of a
-  broken image.
+- Failed generations offer **Try again**, which creates a new generation with the same settings and its own estimate and
+  reservation. Pixelforge says `internal_error` failures usually succeed on retry, but we never retry automatically,
+  because a retry is a separately billed generation.
 - Email verification is turned off so reviewers can sign up without a mail server.
 - Validation mirrors Pixelforge's limits (prompt ≤ 4,000 characters, ≤ 4 http(s) reference URLs, enum sizes and
   qualities read from the price list), so users get instant, specific errors rather than a failed generation.
 
+## Images
+
+- Pixelforge's signed image URLs expire 24 hours after completion, and reviewers will look later than that. So on success
+  `StoreGenerationImage` copies the PNG into our storage (`IMAGES_DISK`: local in development, a bucket in production).
+  `generations:reconcile` backfills any copy the queue missed while Pixelforge's URL is still valid.
+- Images are private: they're served through an owner-only route (`/generations/{id}/image`), not public URLs.
+- The fetcher only accepts bytes that start with the PNG signature, so an error page can never be saved as an image.
+  If the stored URL is rejected, it asks Pixelforge for a freshly signed one once.
+- Downloads go through the server too. Browsers ignore `download` on cross-origin links, and this lets us name the file
+  after the prompt.
+
+## Operations
+
+- **Operations** (admin) shows webhook outcomes (applied, ignored as stale, duplicate count, unmatched), retried
+  deliveries, work waiting for capacity or quiet for 5+ minutes, failures by reason, and a 7-day cost check against
+  Pixelforge.
+- `usage:check` runs hourly, compares the last three days with `/v1/usage`, logs a warning for any day that differs,
+  and records the result for the Operations page. A generation that has finished at Pixelforge but whose webhook we
+  haven't processed yet can cause a brief difference; one that persists is a bug.
+- Duplicate deliveries are counted on the event row (`duplicate_deliveries`), so "never recorded twice" is visible,
+  not just true.
+
+## Testing
+
+- The pricing tests use the docs' own worked examples (the $0.373875 maximum and the usage example) as fixtures.
+- `EventOrderingTest` sends every ordering of five deliveries (processing ×2, final ×2, plus the create response):
+  120 orderings each for success and failure. Each must reach the same final state with exactly one charge, or a full
+  refund, and the status must never move backwards at any step. I checked that it catches a deliberately broken
+  forward-only rule.
+- A regression test pushes a job through the real database queue driver. The sync driver and `Queue::fake()` hid a bug
+  where a method named `backoff()` clashed with Laravel's job hook of the same name.
+
 ## Things I'd do next
 
-- Copy finished images to our own storage, so they outlive Pixelforge's 24-hour URLs.
 - Throttle submissions locally to the account-wide limit of 3 concurrent generations, instead of discovering it through
   429s.
-- Show a per-user transaction history page, built on the ledger that already exists.
-- Alert when the admin report finds a day that doesn't match Pixelforge.
+- Alert (Slack or email) when `usage:check` finds a mismatch, instead of only logging it.
+- Thumbnails for the gallery, so it doesn't load full-size PNGs.

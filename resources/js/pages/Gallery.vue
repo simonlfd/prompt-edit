@@ -87,8 +87,8 @@ onBeforeUnmount(() => clearInterval(clock));
             <div>
                 <h1 class="text-2xl font-semibold tracking-tight">Gallery</h1>
                 <p class="text-sm text-muted-foreground">
-                    Everything you’ve made. Star the keepers and download them:
-                    Pixelforge’s image links expire after 24 hours.
+                    Everything you’ve made, kept safe even after Pixelforge’s
+                    24-hour links expire. Star the keepers.
                 </p>
             </div>
             <Button as-child>
