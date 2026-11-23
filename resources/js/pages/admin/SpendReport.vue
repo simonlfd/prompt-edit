@@ -50,6 +50,12 @@ defineOptions({
     },
 });
 
+// Native date inputs differ a lot by browser. iOS centres the value, ignores the
+// height and padding unless the native appearance is off, and collapses an empty field.
+// Chrome on Android jams the value against the calendar icon.
+const dateInput =
+    'appearance-none pr-2 sm:w-40 [&::-webkit-calendar-picker-indicator]:ml-1 [&::-webkit-date-and-time-value]:min-h-[1.5em] [&::-webkit-date-and-time-value]:text-left';
+
 const start = ref(props.report.start_date);
 const end = ref(props.report.end_date);
 
@@ -152,7 +158,7 @@ const topSpenders = computed(() =>
                 </p>
             </div>
             <form
-                class="grid w-full grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-end gap-2 sm:flex sm:w-auto"
+                class="grid w-full grid-cols-2 items-end gap-2 sm:flex sm:w-auto"
                 @submit.prevent="apply"
             >
                 <div class="grid gap-1">
@@ -161,14 +167,24 @@ const topSpenders = computed(() =>
                         id="start"
                         v-model="start"
                         type="date"
-                        class="sm:w-40"
+                        :class="dateInput"
                     />
                 </div>
                 <div class="grid gap-1">
                     <Label for="end" class="text-xs">To</Label>
-                    <Input id="end" v-model="end" type="date" class="sm:w-40" />
+                    <Input
+                        id="end"
+                        v-model="end"
+                        type="date"
+                        :class="dateInput"
+                    />
                 </div>
-                <Button type="submit" variant="outline">Show</Button>
+                <Button
+                    type="submit"
+                    variant="outline"
+                    class="col-span-2 sm:col-span-1"
+                    >Show</Button
+                >
             </form>
         </div>
 
