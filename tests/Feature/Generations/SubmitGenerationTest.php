@@ -4,6 +4,7 @@ use App\Generations\GenerationStatus;
 use App\Jobs\SubmitGeneration;
 use App\Models\Generation;
 use Illuminate\Http\Client\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 
@@ -146,4 +147,16 @@ it('is dispatched when a user creates a generation', function () {
     $generation = pendingGeneration();
 
     Queue::assertPushed(SubmitGeneration::class, fn ($job) => $job->generationId === $generation->id);
+});
+
+it('can be pushed onto a real queue driver', function () {
+    // Regression: the sync driver and Queue::fake() skip the payload building that broke this job.
+    config(['queue.default' => 'database']);
+    $user = userWithCredits();
+
+    $this->actingAs($user)->post(route('generations.store'), [
+        'prompt' => 'A red fox', 'size' => '1024x1024', 'quality' => 'low',
+    ])->assertSessionHasNoErrors();
+
+    expect(DB::table('jobs')->count())->toBe(1);
 });

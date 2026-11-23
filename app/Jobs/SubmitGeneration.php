@@ -56,7 +56,7 @@ class SubmitGeneration implements ShouldQueue
     private function handleError(Generation $generation, PixelforgeException $e, ApplyProviderState $state): void
     {
         if ($e->isRetryable() && $generation->submit_attempts < self::MAX_ATTEMPTS) {
-            $delay = $this->backoff($generation->submit_attempts, $e->retryAfter);
+            $delay = $this->retryDelay($generation->submit_attempts, $e->retryAfter);
 
             $generation->forceFill([
                 'error_code' => $e->errorCode,
@@ -73,8 +73,11 @@ class SubmitGeneration implements ShouldQueue
         $state->failLocally($generation->id, $code, $e->getMessage());
     }
 
-    /** Respect Retry-After, but back off further each attempt: 2s, 4s, 8s… capped at 60s. */
-    private function backoff(int $attempt, ?int $retryAfter): int
+    /**
+     * Respect Retry-After, but back off further each attempt: 2s, 4s, 8s… capped at 60s.
+     * (Not named backoff(): Laravel calls a job's backoff() method itself when queueing it.)
+     */
+    private function retryDelay(int $attempt, ?int $retryAfter): int
     {
         $exponential = min(self::MAX_BACKOFF_SECONDS, 2 ** $attempt);
 
