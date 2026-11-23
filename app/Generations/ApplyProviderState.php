@@ -6,6 +6,7 @@ use App\Billing\CreditLedger;
 use App\Billing\PricingCalculator;
 use App\Billing\Rates;
 use App\Billing\TokenUsage;
+use App\Jobs\StoreGenerationImage;
 use App\Models\Generation;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -116,6 +117,8 @@ class ApplyProviderState
         ])->save();
 
         $this->ledger->settle($generation);
+
+        StoreGenerationImage::dispatch($generation->id)->afterCommit();
     }
 
     /** @param array<string, mixed> $object */

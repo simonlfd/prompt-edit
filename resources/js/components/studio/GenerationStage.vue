@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Clock, ImageOff, Sparkles, TriangleAlert } from '@lucide/vue';
+import { Check, Clock, ImageOff, Sparkles, TriangleAlert } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 import CostBreakdown from '@/components/studio/CostBreakdown.vue';
 import GenerationActions from '@/components/studio/GenerationActions.vue';
@@ -194,10 +194,16 @@ const expiry = computed(() =>
                         }}</span
                     >
                     <span
-                        v-if="expiry && g.status === 'succeeded'"
+                        v-if="g.image_saved"
+                        class="inline-flex items-center gap-1 rounded-md bg-lime/15 px-2 py-0.5 text-foreground"
+                        title="We keep a copy, so this image won’t expire with Pixelforge’s 24-hour link."
+                        ><Check class="size-3" /> saved</span
+                    >
+                    <span
+                        v-else-if="expiry && g.status === 'succeeded'"
                         class="rounded-md bg-studio-choice px-2 py-0.5"
-                        title="Pixelforge image links expire 24 hours after the image is made. Download it to keep it."
-                        >download link: {{ expiry }}</span
+                        title="We’re saving a copy. Until then, this is how long Pixelforge’s link lasts."
+                        >saving… link {{ expiry }}</span
                     >
                 </div>
                 <GenerationActions

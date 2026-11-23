@@ -63,9 +63,15 @@ class GenerationResource extends JsonResource
             'actual_charge' => $this->actual_charge_nanos === null ? null : Money::toDecimal($this->actual_charge_nanos),
             'usage' => $this->usage,
             'cost_breakdown' => $this->costBreakdown(),
-            'image_url' => $this->image_url,
-            'image_url_expired' => $this->image_url_expires_at?->isPast() ?? false,
-            'image_url_expires_at' => $this->image_url_expires_at?->toIso8601String(),
+            // Our stored copy when we have it (never expires); otherwise Pixelforge's signed URL while valid.
+            'image_url' => match (true) {
+                $this->imageStored() => route('generations.image', $this->id, absolute: false),
+                $this->providerImageAvailable() => $this->image_url,
+                default => null,
+            },
+            'image_saved' => $this->imageStored(),
+            'image_url_expired' => ! $this->imageAvailable() && $this->status === GenerationStatus::Succeeded,
+            'image_url_expires_at' => $this->imageStored() ? null : $this->image_url_expires_at?->toIso8601String(),
             'is_favourite' => $this->is_favourite,
             'error' => $this->status === GenerationStatus::Failed || $waiting ? [
                 'code' => $this->error_code,

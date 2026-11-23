@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Generations\ApplyProviderState;
 use App\Generations\GenerationStatus;
+use App\Jobs\StoreGenerationImage;
 use App\Jobs\SubmitGeneration;
 use App\Models\Generation;
 use App\Pixelforge\PixelforgeClient;
@@ -55,6 +56,15 @@ class ReconcileGenerations extends Command
             ->where(fn ($q) => $q->whereNull('next_attempt_at')->orWhere('next_attempt_at', '<', now()->subMinutes(2)))
             ->pluck('id')
             ->each(fn (string $id) => SubmitGeneration::dispatch($id));
+
+        // Finished images we haven't copied yet, while Pixelforge's URL still works.
+        Generation::query()
+            ->where('status', GenerationStatus::Succeeded)
+            ->whereNull('image_path')
+            ->where('completed_at', '<', now()->subMinutes(2))
+            ->where('image_url_expires_at', '>', now())
+            ->pluck('id')
+            ->each(fn (string $id) => StoreGenerationImage::dispatch($id));
 
         return self::SUCCESS;
     }

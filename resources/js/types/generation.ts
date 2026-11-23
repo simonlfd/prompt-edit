@@ -30,6 +30,7 @@ export type Generation = {
     image_url_expires_at: string | null;
     image_url: string | null;
     image_url_expired: boolean;
+    image_saved: boolean;
     error: { code: string | null; message: string | null } | null;
     next_attempt_at: string | null;
     created_at: string;

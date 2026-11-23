@@ -7,6 +7,7 @@ use App\Http\Controllers\EstimateController;
 use App\Http\Controllers\FavouriteController;
 use App\Http\Controllers\GalleryController;
 use App\Http\Controllers\GenerationController;
+use App\Http\Controllers\ImageController;
 use App\Http\Controllers\Webhooks\PixelforgeWebhookController;
 use Illuminate\Support\Facades\Route;
 
@@ -27,6 +28,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('gallery', GalleryController::class)->name('gallery');
     Route::put('generations/{generation}/favourite', [FavouriteController::class, 'update'])
         ->name('generations.favourite');
+    Route::get('generations/{generation}/image', ImageController::class)->name('generations.image');
     Route::get('generations/{generation}/download', DownloadController::class)
         ->middleware('throttle:30,1')
         ->name('generations.download');

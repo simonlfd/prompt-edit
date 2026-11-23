@@ -44,12 +44,12 @@ it('hides other people’s generations', function () {
 
 it('downloads the PNG with a filename based on the prompt', function () {
     $generation = succeededGeneration(attributes: ['prompt' => 'A lighthouse at dawn [succeed]']);
-    Http::fake(['pixelforge.test/images/*' => Http::response('PNGDATA', 200, ['Content-Type' => 'image/png'])]);
+    Http::fake(['pixelforge.test/images/*' => Http::response(PNG, 200, ['Content-Type' => 'image/png'])]);
 
     $response = $this->actingAs($generation->user)->get(route('generations.download', $generation));
 
     $response->assertOk()->assertHeader('Content-Type', 'image/png');
-    expect($response->getContent())->toBe('PNGDATA')
+    expect($response->getContent())->toBe(PNG)
         ->and($response->headers->get('Content-Disposition'))
         ->toBe('attachment; filename="a-lighthouse-at-dawn-'.strtolower(substr($generation->id, -4)).'.png"');
 });
@@ -60,10 +60,10 @@ it('re-signs the image URL when the stored one is rejected', function () {
     Http::fake([
         'pixelforge.test/images/x.png*' => Http::response('', 403),
         PF.'/generations/gen_1' => Http::response(providerGeneration($generation, 'succeeded', ['image_url' => 'https://pixelforge.test/images/fresh.png'])),
-        'pixelforge.test/images/fresh.png' => Http::response('FRESH', 200),
+        'pixelforge.test/images/fresh.png' => Http::response(PNG.'FRESH', 200),
     ]);
 
-    expect($this->actingAs($generation->user)->get(route('generations.download', $generation))->getContent())->toBe('FRESH');
+    expect($this->actingAs($generation->user)->get(route('generations.download', $generation))->getContent())->toBe(PNG.'FRESH');
 });
 
 it('explains when an image has expired instead of serving a broken file', function () {

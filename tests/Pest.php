@@ -19,6 +19,9 @@ pest()->extend(TestCase::class)->in('Unit');
 const PF = 'https://pixelforge.test/v1';
 const WEBHOOK_SECRET = 'whsec_test';
 
+/** The 8-byte PNG signature plus some bytes: enough to pass as an image. */
+const PNG = "\x89PNG\r\n\x1a\nfake-image-bytes";
+
 /** The documented GET /v1/pricing response. */
 function pricingResponse(): array
 {

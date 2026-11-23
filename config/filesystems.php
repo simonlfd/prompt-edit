@@ -16,6 +16,13 @@ return [
     'default' => env('FILESYSTEM_DISK', 'local'),
 
     /*
+    | Where we keep our copies of generated images. Images are private and served through an
+    | authenticated route, so any disk works: "local" in development, an S3-compatible bucket
+    | (e.g. Laravel Cloud object storage) in production.
+    */
+    'images_disk' => env('IMAGES_DISK', 'local'),
+
+    /*
     |--------------------------------------------------------------------------
     | Filesystem Disks
     |--------------------------------------------------------------------------

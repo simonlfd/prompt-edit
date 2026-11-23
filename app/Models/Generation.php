@@ -30,6 +30,7 @@ use Illuminate\Support\Str;
  * @property int|null $actual_charge_nanos
  * @property string|null $image_url
  * @property bool $is_favourite
+ * @property string|null $image_path
  * @property Carbon|null $image_url_expires_at
  * @property string|null $error_code
  * @property string|null $error_message
@@ -81,12 +82,29 @@ class Generation extends Model
         $query->whereIn('status', GenerationStatus::inFlight());
     }
 
-    /** Whether the image can still be fetched from Pixelforge (signed URLs expire after 24 hours). */
-    public function imageAvailable(): bool
+    /** Whether we have our own copy of the image. */
+    public function imageStored(): bool
+    {
+        return $this->image_path !== null;
+    }
+
+    /** Whether Pixelforge's signed URL still works (they expire 24 hours after completion). */
+    public function providerImageAvailable(): bool
     {
         return $this->status === GenerationStatus::Succeeded
             && $this->image_url !== null
             && ($this->image_url_expires_at === null || $this->image_url_expires_at->isFuture());
+    }
+
+    /** Whether the image can be shown or downloaded at all. */
+    public function imageAvailable(): bool
+    {
+        return $this->imageStored() || $this->providerImageAvailable();
+    }
+
+    public function storagePath(): string
+    {
+        return "generations/{$this->user_id}/{$this->id}.png";
     }
 
     /** A readable download name, e.g. "a-lighthouse-on-a-cliff-at-dawn-7x2k.png". */
