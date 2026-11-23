@@ -2,7 +2,10 @@
 
 use App\Http\Controllers\Admin\SpendReportController;
 use App\Http\Controllers\CreditController;
+use App\Http\Controllers\DownloadController;
 use App\Http\Controllers\EstimateController;
+use App\Http\Controllers\FavouriteController;
+use App\Http\Controllers\GalleryController;
 use App\Http\Controllers\GenerationController;
 use App\Http\Controllers\Webhooks\PixelforgeWebhookController;
 use Illuminate\Support\Facades\Route;
@@ -20,6 +23,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('generations/estimate', EstimateController::class)
         ->middleware('throttle:240,1')
         ->name('generations.estimate');
+
+    Route::get('gallery', GalleryController::class)->name('gallery');
+    Route::put('generations/{generation}/favourite', [FavouriteController::class, 'update'])
+        ->name('generations.favourite');
+    Route::get('generations/{generation}/download', DownloadController::class)
+        ->middleware('throttle:30,1')
+        ->name('generations.download');
 
     Route::post('credits', [CreditController::class, 'store'])
         ->middleware('throttle:10,1')

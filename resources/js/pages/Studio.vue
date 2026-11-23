@@ -1,19 +1,25 @@
 <script setup lang="ts">
 import { Head, usePage, usePoll } from '@inertiajs/vue3';
-import { ImagePlus, Wallet } from '@lucide/vue';
+import { Wallet } from '@lucide/vue';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { toast } from 'vue-sonner';
 import BuyCreditsDialog from '@/components/studio/BuyCreditsDialog.vue';
 import GenerateForm from '@/components/studio/GenerateForm.vue';
-import GenerationCard from '@/components/studio/GenerationCard.vue';
+import GenerationRail from '@/components/studio/GenerationRail.vue';
+import GenerationStage from '@/components/studio/GenerationStage.vue';
 import { Button } from '@/components/ui/button';
+import { isInFlight } from '@/lib/generation';
 import { formatUsd, formatUsdExact } from '@/lib/money';
 import { dashboard } from '@/routes';
 import type { Generation, StudioOptions } from '@/types';
 
 const props = defineProps<{
     generations: { data: Generation[] };
+    favourites: { data: Generation[] };
     options: StudioOptions;
     credit_packs: number[];
+    reuse: Generation | null;
+    focus: string | null;
 }>();
 
 defineOptions({
@@ -24,31 +30,100 @@ defineOptions({
 
 const page = usePage();
 const buyOpen = ref(false);
+const form = ref<InstanceType<typeof GenerateForm> | null>(null);
 
-// Live status: poll only while something is still in flight.
-const inFlight = computed(() =>
-    props.generations.data.some((g) =>
-        ['pending', 'queued', 'processing'].includes(g.status),
-    ),
+const recent = computed(() => props.generations.data);
+const all = computed(() => {
+    const byId = new Map<string, Generation>();
+    [...props.favourites.data, ...recent.value].forEach((g) =>
+        byId.set(g.id, g),
+    );
+
+    return byId;
+});
+
+// The stage shows the selected generation, defaulting to the newest.
+const selectedId = ref<string | null>(
+    props.focus ?? recent.value[0]?.id ?? null,
+);
+const current = computed(
+    () =>
+        (selectedId.value && all.value.get(selectedId.value)) ||
+        recent.value[0] ||
+        null,
 );
 
+// When a new generation appears (you just submitted one), bring it on stage.
+watch(
+    () => recent.value[0]?.id,
+    (newest, previous) => {
+        if (newest && newest !== previous) {
+            selectedId.value = newest;
+        }
+    },
+);
+
+// Live status: poll only while something is in flight.
+const inFlightCount = computed(() => recent.value.filter(isInFlight).length);
 const { start, stop } = usePoll(
-    2500,
-    { only: ['generations', 'balance'] },
+    2000,
+    { only: ['generations', 'favourites', 'balance'] },
     { autoStart: false },
 );
+watch(inFlightCount, (n) => (n > 0 ? start() : stop()), { immediate: true });
 
-watch(inFlight, (active) => (active ? start() : stop()), { immediate: true });
+// Tell people when something finishes, even if they're looking at another image.
+const lastStatus = new Map(recent.value.map((g) => [g.id, g.status]));
+watch(recent, (list) => {
+    for (const g of list) {
+        const before = lastStatus.get(g.id);
 
-// A clock for relative times and retry countdowns.
+        if (before && isInFlight({ ...g, status: before }) && !isInFlight(g)) {
+            const view = {
+                label: 'View',
+                onClick: () => (selectedId.value = g.id),
+            };
+
+            if (g.status === 'succeeded') {
+                toast.success('Your image is ready', {
+                    description: g.prompt.slice(0, 80),
+                    action: view,
+                });
+            } else {
+                toast.error('Generation failed. You weren’t charged.', {
+                    description: g.error?.message ?? undefined,
+                    action: view,
+                });
+            }
+        }
+
+        lastStatus.set(g.id, g.status);
+    }
+});
+
+function reuse(g: Generation) {
+    form.value?.fill(g);
+}
+
+onMounted(() => {
+    if (props.reuse) {
+        form.value?.fill(props.reuse);
+    }
+});
+
+// A clock for elapsed timers and retry countdowns.
 const now = ref(Date.now());
 let clock: ReturnType<typeof setInterval> | undefined;
 onMounted(() => (clock = setInterval(() => (now.value = Date.now()), 1000)));
 onBeforeUnmount(() => clearInterval(clock));
+
+const title = computed(() =>
+    inFlightCount.value ? `(${inFlightCount.value}) Generating…` : 'Studio',
+);
 </script>
 
 <template>
-    <Head title="Studio" />
+    <Head :title="title" />
 
     <div class="flex flex-1 flex-col gap-6 p-4 md:p-6">
         <div class="flex flex-wrap items-center justify-between gap-3">
@@ -76,7 +151,7 @@ onBeforeUnmount(() => clearInterval(clock));
         </div>
 
         <div
-            class="grid gap-6 lg:grid-cols-[24rem_minmax(0,1fr)] lg:items-start"
+            class="grid gap-6 lg:grid-cols-[22rem_minmax(0,1fr)] lg:items-start min-[88rem]:grid-cols-[22rem_minmax(0,1fr)_13rem]"
         >
             <section
                 aria-labelledby="new-generation"
@@ -94,44 +169,28 @@ onBeforeUnmount(() => clearInterval(clock));
                 </p>
                 <GenerateForm
                     v-else
+                    ref="form"
                     :options="options"
                     @buy-credits="buyOpen = true"
                 />
             </section>
 
-            <section aria-labelledby="history" class="min-w-0">
-                <div class="mb-4 flex items-baseline justify-between">
-                    <h2 id="history" class="text-base font-semibold">
-                        Your images
-                    </h2>
-                    <span v-if="inFlight" class="text-xs text-muted-foreground">
-                        Updating live
-                    </span>
-                </div>
-
-                <div
-                    v-if="!generations.data.length"
-                    class="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed p-12 text-center"
-                >
-                    <ImagePlus class="size-8 text-muted-foreground" />
-                    <p class="text-sm text-muted-foreground">
-                        No images yet. Write a prompt to make your first one.
-                    </p>
-                </div>
-
-                <div
-                    v-else
-                    class="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3"
-                    aria-live="polite"
-                >
-                    <GenerationCard
-                        v-for="generation in generations.data"
-                        :key="generation.id"
-                        :generation="generation"
-                        :now="now"
-                    />
-                </div>
+            <section aria-label="Current image" class="min-w-0">
+                <GenerationStage
+                    :generation="current"
+                    :now="now"
+                    :markup-percent="options.markup_percent"
+                    @reuse="reuse"
+                />
             </section>
+
+            <GenerationRail
+                class="lg:col-start-2 min-[88rem]:sticky min-[88rem]:top-4 min-[88rem]:col-start-3 min-[88rem]:row-start-1"
+                :recent="recent"
+                :favourites="favourites.data"
+                :selected-id="current?.id ?? null"
+                @select="selectedId = $event.id"
+            />
         </div>
 
         <BuyCreditsDialog v-model:open="buyOpen" :packs="credit_packs" />

@@ -31,6 +31,22 @@ final readonly class Rates
         return Money::ceilDiv($numerator, 1_000_000);
     }
 
+    /**
+     * Cost of each token type on its own, for showing a breakdown. Lines are rounded up individually,
+     * so in theory they can sum to a nanodollar more than costNanos(); with today's rates they're exact.
+     *
+     * @return array<string, int>
+     */
+    public function lineCostsNanos(TokenUsage $usage): array
+    {
+        $lines = [];
+        foreach ($usage->toArray() as $key => $tokens) {
+            $lines[$key] = Money::ceilDiv($tokens * Money::nanosFromDecimal($this->rates[$key]), 1_000_000);
+        }
+
+        return $lines;
+    }
+
     /** @return array<string, string> */
     public function toArray(): array
     {

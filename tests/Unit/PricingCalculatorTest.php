@@ -72,3 +72,15 @@ it('estimates output tokens exactly from size and quality', function (string $qu
     ['medium', '1536x1024', 1650],
     ['high', '1024x1536', 6450],
 ]);
+
+it('breaks the cost down per token type, summing to the total', function () {
+    $usage = new TokenUsage(12, 765, 6450, 3184);
+    $lines = $this->pricing->rates->lineCostsNanos($usage);
+
+    expect($lines)->toBe([
+        'input_text_tokens' => 60_000,
+        'input_image_tokens' => 7_650_000,
+        'output_tokens' => 258_000_000,
+        'reasoning_tokens' => 39_800_000,
+    ])->and(array_sum($lines))->toBe($this->pricing->rates->costNanos($usage));
+});

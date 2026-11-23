@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { compareUsd, formatUsd } from '@/lib/money';
 import { estimate as estimateRoute, store } from '@/routes/generations';
-import type { Estimate, StudioOptions } from '@/types';
+import type { Estimate, Generation, StudioOptions } from '@/types';
 
 const props = defineProps<{ options: StudioOptions }>();
 const emit = defineEmits<{ buyCredits: [] }>();
@@ -132,6 +132,21 @@ function submit() {
     form.post(store.url(), { preserveScroll: true });
 }
 
+const promptInput = ref<HTMLTextAreaElement | null>(null);
+
+/** "Reuse settings": copy an earlier generation's settings into the form, ready to tweak. */
+function fill(g: Generation) {
+    form.prompt = g.prompt;
+    form.size = g.size;
+    form.quality = g.quality;
+    form.reference_images = [...g.reference_images];
+    form.clearErrors();
+    promptInput.value?.focus();
+    promptInput.value?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+defineExpose({ fill });
+
 function onPromptKeydown(event: KeyboardEvent) {
     if (
         event.key === 'Enter' &&
@@ -171,6 +186,7 @@ function onPromptKeydown(event: KeyboardEvent) {
             <div class="relative">
                 <textarea
                     id="prompt"
+                    ref="promptInput"
                     v-model="form.prompt"
                     rows="5"
                     placeholder="Describe the image you want…"

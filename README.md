@@ -33,16 +33,16 @@ Scheduler ─ generations:reconcile ─▶ ApplyProviderState ◀── create r
            (polls overdue ones)        lock row · forward-only status · on final: cost, charge, settle ledger
 ```
 
-| Where | What |
-|---|---|
-| `app/Billing` | `Money` (nanodollars), `Rates`, `Pricing`, `PricingCalculator`, `CreditLedger` |
-| `app/Pixelforge` | HTTP client, errors, cached price list, webhook signatures |
-| `app/Generations` | `CreateGeneration`, `ApplyProviderState` (the state machine), `HandleWebhookEvent` |
-| `app/Jobs/SubmitGeneration.php` | Submission with retries and backoff |
-| `app/Console/Commands/ReconcileGenerations.php` | Polling for missed webhooks and lost jobs |
-| `app/Reports/SpendReport.php` | Admin report and `/v1/usage` reconciliation |
-| `resources/js/pages/Studio.vue`, `components/studio/*` | The UI |
-| `tests/` | Pest: pricing against the docs' worked examples, webhooks (signature, dedup, ordering), retries, ledger, report |
+| Where                                                  | What                                                                                                            |
+| ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------- |
+| `app/Billing`                                          | `Money` (nanodollars), `Rates`, `Pricing`, `PricingCalculator`, `CreditLedger`                                  |
+| `app/Pixelforge`                                       | HTTP client, errors, cached price list, webhook signatures                                                      |
+| `app/Generations`                                      | `CreateGeneration`, `ApplyProviderState` (the state machine), `HandleWebhookEvent`                              |
+| `app/Jobs/SubmitGeneration.php`                        | Submission with retries and backoff                                                                             |
+| `app/Console/Commands/ReconcileGenerations.php`        | Polling for missed webhooks and lost jobs                                                                       |
+| `app/Reports/SpendReport.php`                          | Admin report and `/v1/usage` reconciliation                                                                     |
+| `resources/js/pages/Studio.vue`, `components/studio/*` | The UI                                                                                                          |
+| `tests/`                                               | Pest: pricing against the docs' worked examples, webhooks (signature, dedup, ordering), retries, ledger, report |
 
 ## Running locally
 

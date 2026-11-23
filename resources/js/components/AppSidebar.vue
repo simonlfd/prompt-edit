@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { BookOpen, ChartColumn, FolderGit2, Sparkles } from '@lucide/vue';
+import {
+    BookOpen,
+    ChartColumn,
+    FolderGit2,
+    Images,
+    Sparkles,
+} from '@lucide/vue';
 import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
@@ -15,7 +21,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { dashboard } from '@/routes';
+import { dashboard, gallery } from '@/routes';
 import { report } from '@/routes/admin';
 import type { NavItem } from '@/types';
 
@@ -23,6 +29,7 @@ const page = usePage();
 
 const mainNavItems = computed<NavItem[]>(() => [
     { title: 'Studio', href: dashboard(), icon: Sparkles },
+    { title: 'Gallery', href: gallery(), icon: Images },
     ...(page.props.auth.is_admin
         ? [{ title: 'Spend report', href: report(), icon: ChartColumn }]
         : []),

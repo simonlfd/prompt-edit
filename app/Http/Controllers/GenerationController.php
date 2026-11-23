@@ -24,10 +24,19 @@ class GenerationController extends Controller
             $pricing = null;
         }
 
+        $user = $request->user();
+        $reuse = $request->query('reuse');
+
         return Inertia::render('Studio', [
-            'generations' => GenerationResource::collection(
-                $request->user()->generations()->latest()->limit(60)->get()
+            'generations' => GenerationResource::collection($user->generations()->latest()->limit(20)->get()),
+            'favourites' => GenerationResource::collection(
+                $user->generations()->where('is_favourite', true)->latest()->limit(20)->get()
             ),
+            // "Reuse settings" from the gallery: prefill the form with an earlier generation's settings.
+            'reuse' => is_string($reuse)
+                ? fn () => ($g = $user->generations()->whereKey($reuse)->first()) ? (new GenerationResource($g))->resolve($request) : null
+                : null,
+            'focus' => $request->query('g'),
             'options' => [
                 'sizes' => $pricing?->sizes() ?? [],
                 'qualities' => $pricing?->qualities() ?? [],

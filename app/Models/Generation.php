@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 
 /**
  * @property string $id
@@ -28,6 +29,7 @@ use Illuminate\Support\Carbon;
  * @property int|null $actual_provider_nanos
  * @property int|null $actual_charge_nanos
  * @property string|null $image_url
+ * @property bool $is_favourite
  * @property Carbon|null $image_url_expires_at
  * @property string|null $error_code
  * @property string|null $error_message
@@ -58,6 +60,7 @@ class Generation extends Model
             'max_charge_nanos' => 'integer',
             'actual_provider_nanos' => 'integer',
             'actual_charge_nanos' => 'integer',
+            'is_favourite' => 'boolean',
             'image_url_expires_at' => 'datetime',
             'next_attempt_at' => 'datetime',
             'submitted_at' => 'datetime',
@@ -76,6 +79,22 @@ class Generation extends Model
     public function scopeInFlight(Builder $query): void
     {
         $query->whereIn('status', GenerationStatus::inFlight());
+    }
+
+    /** Whether the image can still be fetched from Pixelforge (signed URLs expire after 24 hours). */
+    public function imageAvailable(): bool
+    {
+        return $this->status === GenerationStatus::Succeeded
+            && $this->image_url !== null
+            && ($this->image_url_expires_at === null || $this->image_url_expires_at->isFuture());
+    }
+
+    /** A readable download name, e.g. "a-lighthouse-on-a-cliff-at-dawn-7x2k.png". */
+    public function downloadFilename(): string
+    {
+        $slug = Str::slug(Str::limit(preg_replace('/\[[a-z]+\]/i', '', $this->prompt), 60, '')) ?: 'image';
+
+        return $slug.'-'.strtolower(substr($this->id, -4)).'.png';
     }
 
     public function ratesObject(): Rates
