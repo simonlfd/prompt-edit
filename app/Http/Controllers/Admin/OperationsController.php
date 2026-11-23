@@ -28,6 +28,13 @@ class OperationsController extends Controller
 
         return Inertia::render('admin/Operations', [
             'timeline' => $timeline->build(),
+            'storage' => [
+                'images_disk' => config('filesystems.images_disk'),
+                'driver' => config('filesystems.disks.'.config('filesystems.images_disk').'.driver'),
+                // A local disk on a cloud host is usually wiped on redeploy: images would silently vanish.
+                'ephemeral_risk' => app()->isProduction()
+                    && config('filesystems.disks.'.config('filesystems.images_disk').'.driver') !== 's3',
+            ],
             'webhooks' => [
                 'received' => (clone $recent)->count(),
                 'duplicates_ignored' => (int) (clone $recent)->sum('duplicate_deliveries'),

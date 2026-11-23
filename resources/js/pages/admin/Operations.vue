@@ -37,6 +37,11 @@ type Event = {
 };
 
 const props = defineProps<{
+    storage: {
+        images_disk: string;
+        driver: string | null;
+        ephemeral_risk: boolean;
+    };
     timeline: {
         hours: string[];
         generations: { succeeded: number[]; failed: number[] };
@@ -199,6 +204,25 @@ const outcomeLabel: Record<string, string> = {
                 we handled it, work that’s retrying or stuck, and whether our
                 cost records still match Pixelforge’s. Counts cover the last 24
                 hours.
+            </p>
+        </div>
+
+        <div
+            v-if="storage.ephemeral_risk"
+            role="alert"
+            class="rounded-xl border border-destructive/40 bg-destructive/8 px-4 py-3 text-sm"
+        >
+            <p class="font-medium text-destructive">
+                Images are being stored on “{{ storage.images_disk }}” ({{
+                    storage.driver ?? 'unknown driver'
+                }}), not a bucket.
+            </p>
+            <p class="mt-0.5 text-muted-foreground">
+                A local disk is wiped on redeploy, so saved images would
+                disappear. Set
+                <code class="font-mono">IMAGES_DISK</code> to the bucket’s disk
+                name, redeploy, then run
+                <code class="font-mono">php artisan images:backfill</code>.
             </p>
         </div>
 

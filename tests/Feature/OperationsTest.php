@@ -81,3 +81,12 @@ it('buckets the last 24 hours of outcomes and webhooks by hour', function () {
         ->and($timeline['webhooks']['applied'][23])->toBe(2)
         ->and($timeline['webhooks']['duplicates'][23])->toBe(1);
 });
+
+it('warns when production keeps images on a non-bucket disk', function () {
+    Http::fake([PF.'/usage*' => Http::response(['object' => 'usage', 'data' => [], 'total' => []])]);
+    $this->app['env'] = 'production';
+    config(['filesystems.images_disk' => 'local']);
+
+    $this->actingAs(User::factory()->create(['is_admin' => true]))->get(route('admin.operations'))
+        ->assertInertia(fn (Assert $page) => $page->where('storage.ephemeral_risk', true)->where('storage.driver', 'local'));
+});

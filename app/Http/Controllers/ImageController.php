@@ -30,10 +30,13 @@ class ImageController extends Controller
                 return redirect()->away($disk->temporaryUrl($generation->image_path, now()->addMinutes(self::SIGNED_URL_MINUTES)));
             }
 
-            return $disk->response(
-                $generation->image_path,
-                headers: ['Content-Type' => 'image/png', 'Cache-Control' => 'private, max-age=31536000, immutable'],
-            );
+            // A local copy can vanish (e.g. an ephemeral disk was wiped); then fall back to Pixelforge below.
+            if ($disk->exists($generation->image_path)) {
+                return $disk->response(
+                    $generation->image_path,
+                    headers: ['Content-Type' => 'image/png', 'Cache-Control' => 'private, max-age=31536000, immutable'],
+                );
+            }
         }
 
         abort_unless($generation->providerImageAvailable(), 404);

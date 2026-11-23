@@ -115,3 +115,22 @@ it('redirects to a short-lived signed URL when images live in an S3 bucket', fun
     // Still owner-only: strangers get a 404, not a signed URL.
     $this->actingAs(User::factory()->create())->get(route('generations.image', $generation))->assertNotFound();
 });
+
+it('re-stores images that went missing from the images disk', function () {
+    $generation = finishedGeneration($this);
+    $generation->forceFill(['image_path' => $generation->storagePath()])->save(); // recorded, but no file
+    Queue::fake();
+
+    $this->artisan('images:backfill')->expectsOutputToContain('Re-queued from Pixelforge: 1')->assertSuccessful();
+
+    expect($generation->fresh()->image_path)->toBeNull();
+    Queue::assertPushed(StoreGenerationImage::class, fn ($job) => $job->generationId === $generation->id);
+});
+
+it('falls back to Pixelforge’s URL when a stored file is missing', function () {
+    $generation = finishedGeneration($this);
+    $generation->forceFill(['image_path' => $generation->storagePath()])->save();
+
+    $this->actingAs($generation->user)->get(route('generations.image', $generation))
+        ->assertRedirect('https://pixelforge.test/images/x.png?signature=abc');
+});
