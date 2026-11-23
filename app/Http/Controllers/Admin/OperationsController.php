@@ -32,7 +32,7 @@ class OperationsController extends Controller
                 'stale_ignored' => (clone $recent)->where('outcome', 'ignored_stale')->count(),
                 'unmatched' => (clone $recent)->where('outcome', 'unmatched')->count(),
                 'retried_deliveries' => (clone $recent)->where('delivery_attempt', '>', 1)->count(),
-                'last_received_at' => WebhookEvent::max('created_at'),
+                'last_received_at' => WebhookEvent::latest('id')->value('created_at')?->toIso8601String(),
             ],
             'generations' => [
                 'in_flight' => Generation::inFlight()->count(),

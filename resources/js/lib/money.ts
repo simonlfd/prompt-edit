@@ -27,6 +27,9 @@ function render(nanos: bigint, decimals: number, trim: boolean): string {
 
     if (trim) {
         fraction = fraction.replace(/0+$/, '').padEnd(2, '0');
+    } else if (/^\d{2}0+$/.test(fraction)) {
+        // Whole cents read better as "$10.00" than "$10.0000"; anything finer keeps every digit.
+        fraction = fraction.slice(0, 2);
     }
 
     return `${negative ? '-' : ''}$${whole.toLocaleString('en-US')}.${fraction}`;
@@ -48,8 +51,8 @@ export function formatUsd(
         return `<$0.${'0'.repeat(decimals - 1)}1`;
     }
 
-    // Up to `decimals` places, but no needless trailing zeros: "$10.00", "$0.0723".
-    return render(nanos, decimals, true);
+    // "$10.00" for whole cents, otherwise a consistent `decimals` places: "$9.4120", "$0.0723".
+    return render(nanos, decimals, false);
 }
 
 /** "$0.3818875": the exact amount, trailing zeros trimmed. Used in tooltips and the admin report. */

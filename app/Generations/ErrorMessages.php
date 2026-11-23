@@ -18,6 +18,7 @@ final class ErrorMessages
             'daily_limit_exceeded' => 'The daily Pixelforge quota is used up. It resets at midnight UTC.',
             'validation_failed' => 'Pixelforge didn’t accept these settings.',
             'connection_error' => 'We couldn’t reach Pixelforge.',
+            'invalid_api_key' => 'Pixelforge didn’t accept our API key. That’s on us, not you.',
             'submission_abandoned' => 'Pixelforge stayed busy for too long, so we stopped trying.',
             default => 'Something went wrong at Pixelforge.',
         };

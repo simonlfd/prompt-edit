@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\OperationsController;
 use App\Http\Controllers\Admin\SpendReportController;
+use App\Http\Controllers\BillingController;
 use App\Http\Controllers\CreditController;
 use App\Http\Controllers\DownloadController;
 use App\Http\Controllers\EstimateController;
@@ -34,6 +35,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('throttle:30,1')
         ->name('generations.download');
 
+    Route::get('billing', BillingController::class)->name('billing');
     Route::post('credits', [CreditController::class, 'store'])
         ->middleware('throttle:10,1')
         ->name('credits.store');

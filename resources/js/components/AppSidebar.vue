@@ -6,6 +6,7 @@ import {
     ChartColumn,
     FolderGit2,
     Images,
+    Receipt,
     Sparkles,
 } from '@lucide/vue';
 import { computed } from 'vue';
@@ -22,7 +23,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { dashboard, gallery } from '@/routes';
+import { billing, dashboard, gallery } from '@/routes';
 import { operations, report } from '@/routes/admin';
 import type { NavItem } from '@/types';
 
@@ -31,6 +32,7 @@ const page = usePage();
 const mainNavItems = computed<NavItem[]>(() => [
     { title: 'Studio', href: dashboard(), icon: Sparkles },
     { title: 'Gallery', href: gallery(), icon: Images },
+    { title: 'Billing', href: billing(), icon: Receipt },
     ...(page.props.auth.is_admin
         ? [
               { title: 'Spend report', href: report(), icon: ChartColumn },
