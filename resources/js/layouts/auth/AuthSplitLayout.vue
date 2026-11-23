@@ -25,7 +25,7 @@ defineProps<{
                 class="relative z-20 flex items-center text-lg font-medium"
             >
                 <AppLogoIcon
-                    class="mr-2 size-8 rounded-lg bg-lime p-1.5 text-[#262626]"
+                    class="mr-2 size-8 rounded-[9px] ring-1 ring-white/10"
                 />
                 {{ name }}
             </Link>

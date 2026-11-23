@@ -1,19 +1,17 @@
 <script setup lang="ts">
-import { usePage } from '@inertiajs/vue3';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
-
-const name = usePage().props.name;
 </script>
 
 <template>
-    <div
-        class="flex aspect-square size-8 items-center justify-center rounded-md bg-lime text-[#262626]"
-    >
-        <AppLogoIcon class="size-4.5" />
-    </div>
-    <div class="ml-1 grid flex-1 text-left text-sm">
-        <span class="mb-0.5 truncate leading-tight font-semibold">{{
-            name
-        }}</span>
+    <AppLogoIcon
+        class="size-8! shrink-0 rounded-[9px] dark:ring-1 dark:ring-white/10"
+    />
+    <div class="ml-1 grid flex-1 text-left">
+        <span
+            class="truncate font-display text-[15px] leading-tight font-semibold tracking-tight"
+        >
+            PromptEdit
+            <span class="font-normal text-muted-foreground">Studio</span>
+        </span>
     </div>
 </template>
