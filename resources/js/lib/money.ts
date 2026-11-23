@@ -32,7 +32,7 @@ function render(nanos: bigint, decimals: number, trim: boolean): string {
     return `${negative ? '-' : ''}$${whole.toLocaleString('en-US')}.${fraction}`;
 }
 
-/** "$0.3819": rounded for reading. Tiny non-zero amounts show as "<$0.0001" rather than "$0.0000". */
+/** "$0.3819" or "$10.00": rounded for reading. Tiny non-zero amounts show as "<$0.0001" rather than "$0.0000". */
 export function formatUsd(
     decimal: string | null | undefined,
     decimals = 4,
@@ -48,7 +48,8 @@ export function formatUsd(
         return `<$0.${'0'.repeat(decimals - 1)}1`;
     }
 
-    return render(nanos, decimals, false);
+    // Up to `decimals` places, but no needless trailing zeros: "$10.00", "$0.0723".
+    return render(nanos, decimals, true);
 }
 
 /** "$0.3818875": the exact amount, trailing zeros trimmed. Used in tooltips and the admin report. */

@@ -16,12 +16,6 @@ const inFlight = computed(() =>
     ['pending', 'queued', 'processing'].includes(g.value.status),
 );
 
-const aspect = computed(() => {
-    const [w, h] = g.value.size.split('x').map(Number);
-
-    return w === h ? 'aspect-square' : w > h ? 'aspect-[3/2]' : 'aspect-[2/3]';
-});
-
 const retryIn = computed(() => {
     if (!g.value.next_attempt_at) {
         return null;
@@ -52,15 +46,14 @@ const tokenRows = computed(() =>
         :aria-label="`Generation: ${g.prompt}`"
     >
         <div
-            class="relative flex items-center justify-center bg-studio-page-alt"
-            :class="aspect"
+            class="relative flex aspect-square items-center justify-center bg-studio-page-alt"
         >
             <img
                 v-if="g.status === 'succeeded' && g.image_url && !imageFailed"
                 :src="g.image_url"
                 :alt="g.prompt"
                 loading="lazy"
-                class="size-full object-cover"
+                class="size-full object-contain"
                 @error="imageFailed = true"
             />
             <div

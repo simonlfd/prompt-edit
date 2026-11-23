@@ -173,7 +173,7 @@ function onPromptKeydown(event: KeyboardEvent) {
                     id="prompt"
                     v-model="form.prompt"
                     rows="5"
-                    placeholder="A lighthouse on a cliff at dawn, oil painting"
+                    placeholder="Describe the image you want…"
                     class="field-sizing-content min-h-32 w-full resize-y rounded-lg border border-input bg-card px-3 py-2 pb-6 text-sm shadow-xs outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/30 aria-invalid:border-destructive"
                     :aria-invalid="!!form.errors.prompt"
                     aria-describedby="prompt-count"
