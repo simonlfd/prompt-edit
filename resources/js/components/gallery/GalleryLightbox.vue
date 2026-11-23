@@ -77,12 +77,18 @@ function onKeydown(event: KeyboardEvent) {
             @keydown="onKeydown"
         >
             <div class="grid md:grid-cols-[minmax(0,1fr)_20rem]">
+                <!-- Extra top padding on phones keeps the dialog's close button off the image. -->
                 <div
-                    class="relative flex items-center justify-center bg-studio-page-alt p-4 md:p-6"
+                    class="relative flex items-center justify-center bg-studio-page-alt p-4 pt-12 [--lightbox-max:55dvh] md:p-6 md:[--lightbox-max:78dvh]"
                 >
                     <div
                         class="overflow-hidden rounded-xl"
-                        :style="frameStyle(g.size, 'min(78dvh, 40rem)')"
+                        :style="
+                            frameStyle(
+                                g.size,
+                                'min(var(--lightbox-max), 40rem)',
+                            )
+                        "
                     >
                         <img
                             v-if="g.status === 'succeeded' && g.image_url"

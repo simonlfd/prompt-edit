@@ -101,7 +101,7 @@ onBeforeUnmount(() => clearInterval(clock));
             <div
                 role="tablist"
                 aria-label="Filter"
-                class="inline-flex gap-1 rounded-lg bg-studio-choice p-1"
+                class="flex w-full gap-1 overflow-x-auto rounded-lg bg-studio-choice p-1 sm:inline-flex sm:w-auto"
             >
                 <button
                     v-for="f in filters"
@@ -109,7 +109,7 @@ onBeforeUnmount(() => clearInterval(clock));
                     role="tab"
                     type="button"
                     :aria-selected="filter === f.value"
-                    class="inline-flex items-center gap-1.5 rounded-[calc(var(--radius-lg)-3px)] px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground aria-selected:bg-card aria-selected:text-foreground aria-selected:shadow-pop"
+                    class="inline-flex flex-1 shrink-0 items-center justify-center gap-1.5 rounded-[calc(var(--radius-lg)-3px)] px-2.5 py-1.5 text-sm font-medium whitespace-nowrap text-muted-foreground transition-colors hover:text-foreground aria-selected:bg-card aria-selected:text-foreground aria-selected:shadow-pop sm:flex-none sm:px-3"
                     @click="visit({ filter: f.value, page: 1 })"
                 >
                     <Star

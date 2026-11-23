@@ -8,6 +8,8 @@ const props = defineProps<{
     generation: Generation;
     class?: string;
     showLabel?: boolean;
+    /** Classes for the label, e.g. to hide it on narrow screens. */
+    labelClass?: string;
 }>();
 const { isFavourite, toggleFavourite } = useGenerationActions();
 </script>
@@ -42,7 +44,7 @@ const { isFavourite, toggleFavourite } = useGenerationActions();
                     : 'text-current'
             "
         />
-        <span v-if="showLabel">{{
+        <span v-if="showLabel" :class="labelClass">{{
             isFavourite(generation) ? 'Favourited' : 'Favourite'
         }}</span>
     </button>

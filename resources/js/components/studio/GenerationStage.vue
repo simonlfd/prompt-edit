@@ -82,7 +82,7 @@ const expiry = computed(() =>
     <!-- Empty: invite the first generation -->
     <div
         v-if="!g"
-        class="flex min-h-[28rem] flex-col items-center justify-center gap-3 rounded-2xl border border-dashed bg-card p-10 text-center"
+        class="flex min-h-64 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed bg-card p-6 text-center sm:p-10 lg:min-h-[28rem]"
     >
         <div
             class="flex size-12 items-center justify-center rounded-xl bg-lime/20"
@@ -91,16 +91,21 @@ const expiry = computed(() =>
         </div>
         <h2 class="text-lg font-semibold">Your image will appear here</h2>
         <p class="max-w-sm text-sm text-muted-foreground">
-            Write a prompt and press
+            <!-- Phones have no ⌘ key, so they get the plain version. -->
+            <span class="sm:hidden"
+                >Write a prompt and tap Generate image.</span
+            >
+            <span class="hidden sm:inline">Write a prompt and press</span>
             <kbd
-                class="rounded border bg-studio-page px-1.5 py-0.5 font-mono text-xs"
+                class="hidden rounded border bg-studio-page px-1.5 py-0.5 font-mono text-xs sm:inline"
                 >⌘</kbd
             >
             <kbd
-                class="rounded border bg-studio-page px-1.5 py-0.5 font-mono text-xs"
+                class="hidden rounded border bg-studio-page px-1.5 py-0.5 font-mono text-xs sm:inline"
                 >Enter</kbd
             >
-            to generate. You’ll see exactly what it costs before and after.
+            <span class="hidden sm:inline">to generate.</span> You’ll see
+            exactly what it costs before and after.
         </p>
     </div>
 
@@ -111,7 +116,7 @@ const expiry = computed(() =>
         aria-live="polite"
     >
         <div
-            class="flex items-center justify-between gap-3 border-b px-4 py-2.5"
+            class="flex items-center justify-between gap-3 border-b px-3 py-2.5 sm:px-4"
         >
             <div class="flex min-w-0 items-center gap-3">
                 <StatusPill :generation="g" />
@@ -126,6 +131,7 @@ const expiry = computed(() =>
                 <FavouriteButton
                     :generation="g"
                     show-label
+                    label-class="hidden @md:inline"
                     class="h-8 border bg-card px-2.5 hover:bg-accent"
                 />
                 <Button
@@ -134,7 +140,10 @@ const expiry = computed(() =>
                     variant="outline"
                     as-child
                 >
-                    <a :href="downloadUrl(g)" download><Download /> Download</a>
+                    <a :href="downloadUrl(g)" download aria-label="Download"
+                        ><Download />
+                        <span class="hidden @md:inline">Download</span></a
+                    >
                 </Button>
             </div>
         </div>

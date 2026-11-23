@@ -86,11 +86,11 @@ const kinds = {
             <Button @click="buyOpen = true"><Wallet /> Buy credits</Button>
         </div>
 
-        <section class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <section class="grid grid-cols-2 gap-3 lg:grid-cols-4">
             <div class="rounded-xl border bg-card p-4">
                 <p class="text-xs text-muted-foreground">Balance</p>
                 <p
-                    class="font-mono text-2xl font-medium tabular-nums"
+                    class="font-mono text-xl font-medium tabular-nums sm:text-2xl"
                     :title="formatUsdExact(page.props.balance)"
                 >
                     {{ formatUsd(page.props.balance) }}
@@ -100,7 +100,7 @@ const kinds = {
             <div class="rounded-xl border bg-card p-4">
                 <p class="text-xs text-muted-foreground">Reserved right now</p>
                 <p
-                    class="font-mono text-2xl font-medium tabular-nums"
+                    class="font-mono text-xl font-medium tabular-nums sm:text-2xl"
                     :title="formatUsdExact(summary.reserved)"
                 >
                     {{ formatUsd(summary.reserved) }}
@@ -112,7 +112,7 @@ const kinds = {
             <div class="rounded-xl border bg-card p-4">
                 <p class="text-xs text-muted-foreground">Spent on images</p>
                 <p
-                    class="font-mono text-2xl font-medium tabular-nums"
+                    class="font-mono text-xl font-medium tabular-nums sm:text-2xl"
                     :title="formatUsdExact(summary.spent)"
                 >
                     {{ formatUsd(summary.spent) }}
@@ -125,7 +125,9 @@ const kinds = {
             </div>
             <div class="rounded-xl border bg-card p-4">
                 <p class="text-xs text-muted-foreground">Credits added</p>
-                <p class="font-mono text-2xl font-medium tabular-nums">
+                <p
+                    class="font-mono text-xl font-medium tabular-nums sm:text-2xl"
+                >
                     {{ formatUsd(summary.bought) }}
                 </p>
                 <p class="text-xs text-muted-foreground">
@@ -134,7 +136,7 @@ const kinds = {
             </div>
         </section>
 
-        <section class="overflow-x-auto rounded-xl border bg-card">
+        <section class="overflow-hidden rounded-xl border bg-card">
             <h2 class="border-b px-4 py-3 text-sm font-semibold">History</h2>
             <p
                 v-if="!entries.data.length"
@@ -142,13 +144,23 @@ const kinds = {
             >
                 Nothing yet.
             </p>
-            <table v-else class="w-full text-sm">
+            <table v-else class="w-full table-fixed text-sm sm:table-auto">
                 <thead class="text-xs text-muted-foreground">
                     <tr class="border-b">
-                        <th class="px-4 py-2 text-left font-medium">When</th>
+                        <th
+                            class="hidden px-4 py-2 text-left font-medium sm:table-cell"
+                        >
+                            When
+                        </th>
                         <th class="px-4 py-2 text-left font-medium">What</th>
-                        <th class="px-4 py-2 text-right font-medium">Amount</th>
-                        <th class="px-4 py-2 text-right font-medium">
+                        <th
+                            class="w-32 px-4 py-2 text-right font-medium sm:w-auto"
+                        >
+                            Amount
+                        </th>
+                        <th
+                            class="hidden px-4 py-2 text-right font-medium sm:table-cell"
+                        >
                             Balance
                         </th>
                     </tr>
@@ -160,12 +172,12 @@ const kinds = {
                         class="border-b last:border-0"
                     >
                         <td
-                            class="px-4 py-2.5 whitespace-nowrap text-muted-foreground"
+                            class="hidden px-4 py-2.5 whitespace-nowrap text-muted-foreground sm:table-cell"
                             :title="absoluteTime(e.created_at)"
                         >
                             {{ relativeTime(e.created_at) }}
                         </td>
-                        <td class="px-4 py-2.5">
+                        <td class="py-2.5 pr-2 pl-4 sm:px-4">
                             <div class="flex items-start gap-2.5">
                                 <span
                                     class="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-md"
@@ -176,7 +188,7 @@ const kinds = {
                                         class="size-3.5"
                                     />
                                 </span>
-                                <span class="min-w-0">
+                                <span class="min-w-0 flex-1">
                                     <span class="font-medium">{{
                                         kinds[e.type].label
                                     }}</span>
@@ -187,20 +199,24 @@ const kinds = {
                                                 query: { g: e.generation.id },
                                             })
                                         "
-                                        class="block max-w-md truncate text-xs text-muted-foreground hover:text-foreground hover:underline"
+                                        class="block truncate text-xs text-muted-foreground hover:text-foreground hover:underline sm:max-w-md"
                                     >
                                         {{ e.generation.prompt }}
                                     </Link>
                                     <span
                                         v-else-if="e.description"
-                                        class="block text-xs text-muted-foreground"
+                                        class="block truncate text-xs text-muted-foreground"
                                         >{{ e.description }}</span
+                                    >
+                                    <span
+                                        class="block text-xs text-muted-foreground sm:hidden"
+                                        >{{ relativeTime(e.created_at) }}</span
                                     >
                                 </span>
                             </div>
                         </td>
                         <td
-                            class="px-4 py-2.5 text-right font-mono whitespace-nowrap tabular-nums"
+                            class="py-2.5 pr-4 pl-2 text-right align-top font-mono whitespace-nowrap tabular-nums sm:px-4 sm:align-middle"
                             :class="
                                 isNegative(e.amount) ? '' : 'text-accent-vivid'
                             "
@@ -210,7 +226,7 @@ const kinds = {
                             }}{{ formatUsdExact(e.amount.replace('-', '')) }}
                         </td>
                         <td
-                            class="px-4 py-2.5 text-right font-mono whitespace-nowrap text-muted-foreground tabular-nums"
+                            class="hidden px-4 py-2.5 text-right font-mono whitespace-nowrap text-muted-foreground tabular-nums sm:table-cell"
                         >
                             {{ formatUsd(e.balance_after) }}
                         </td>

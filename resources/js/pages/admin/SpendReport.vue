@@ -151,34 +151,41 @@ const topSpenders = computed(() =>
                     costs. Amounts are exact.
                 </p>
             </div>
-            <form class="flex items-end gap-2" @submit.prevent="apply">
+            <form
+                class="grid w-full grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-end gap-2 sm:flex sm:w-auto"
+                @submit.prevent="apply"
+            >
                 <div class="grid gap-1">
                     <Label for="start" class="text-xs">From</Label>
                     <Input
                         id="start"
                         v-model="start"
                         type="date"
-                        class="w-40"
+                        class="sm:w-40"
                     />
                 </div>
                 <div class="grid gap-1">
                     <Label for="end" class="text-xs">To</Label>
-                    <Input id="end" v-model="end" type="date" class="w-40" />
+                    <Input id="end" v-model="end" type="date" class="sm:w-40" />
                 </div>
                 <Button type="submit" variant="outline">Show</Button>
             </form>
         </div>
 
-        <div class="grid gap-4 sm:grid-cols-3">
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
             <div class="rounded-xl border bg-card p-4">
                 <p class="text-xs text-muted-foreground">Credit spend</p>
-                <p class="font-mono text-xl font-medium tabular-nums">
+                <p
+                    class="font-mono text-base font-medium tabular-nums sm:text-xl"
+                >
                     {{ money(report.total.charged) }}
                 </p>
             </div>
             <div class="rounded-xl border bg-card p-4">
                 <p class="text-xs text-muted-foreground">Provider cost</p>
-                <p class="font-mono text-xl font-medium tabular-nums">
+                <p
+                    class="font-mono text-base font-medium tabular-nums sm:text-xl"
+                >
                     {{ money(report.total.provider_cost) }}
                 </p>
                 <p class="mt-1 flex items-center gap-1 text-xs">
@@ -198,10 +205,10 @@ const topSpenders = computed(() =>
                     </span>
                 </p>
             </div>
-            <div class="rounded-xl border bg-card p-4">
+            <div class="col-span-2 rounded-xl border bg-card p-4 sm:col-span-1">
                 <p class="text-xs text-muted-foreground">Profit</p>
                 <p
-                    class="font-mono text-xl font-medium tabular-nums"
+                    class="font-mono text-base font-medium tabular-nums sm:text-xl"
                     :class="
                         isNegative(report.total.profit)
                             ? 'text-destructive'
@@ -243,110 +250,120 @@ const topSpenders = computed(() =>
             </section>
         </div>
 
-        <section class="overflow-x-auto rounded-xl border bg-card">
+        <section class="overflow-hidden rounded-xl border bg-card">
             <h2 class="border-b px-4 py-3 text-sm font-semibold">By day</h2>
-            <table class="w-full text-sm">
-                <thead class="text-xs text-muted-foreground">
-                    <tr class="border-b">
-                        <th class="px-4 py-2 text-left font-medium">
-                            Date (UTC)
-                        </th>
-                        <th class="px-4 py-2 text-right font-medium">Images</th>
-                        <th class="px-4 py-2 text-right font-medium">
-                            Charged
-                        </th>
-                        <th class="px-4 py-2 text-right font-medium">
-                            Provider cost
-                        </th>
-                        <th class="px-4 py-2 text-right font-medium">Profit</th>
-                        <th class="px-4 py-2 text-right font-medium">
-                            Pixelforge /v1/usage
-                        </th>
-                    </tr>
-                </thead>
-                <tbody class="font-mono tabular-nums">
-                    <tr
-                        v-for="day in report.days"
-                        :key="day.date"
-                        class="border-b last:border-0"
-                        :class="{
-                            'text-muted-foreground':
-                                day.generations === 0 &&
-                                !day.pixelforge?.generations,
-                        }"
-                    >
-                        <td class="px-4 py-2 font-sans">{{ day.date }}</td>
-                        <td class="px-4 py-2 text-right">
-                            {{ day.generations }}
-                        </td>
-                        <td class="px-4 py-2 text-right">
-                            {{ money(day.charged) }}
-                        </td>
-                        <td class="px-4 py-2 text-right">
-                            {{ money(day.provider_cost) }}
-                        </td>
-                        <td
-                            class="px-4 py-2 text-right"
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm whitespace-nowrap">
+                    <thead class="text-xs text-muted-foreground">
+                        <tr class="border-b">
+                            <th class="px-4 py-2 text-left font-medium">
+                                Date (UTC)
+                            </th>
+                            <th class="px-4 py-2 text-right font-medium">
+                                Images
+                            </th>
+                            <th class="px-4 py-2 text-right font-medium">
+                                Charged
+                            </th>
+                            <th class="px-4 py-2 text-right font-medium">
+                                Provider cost
+                            </th>
+                            <th class="px-4 py-2 text-right font-medium">
+                                Profit
+                            </th>
+                            <th class="px-4 py-2 text-right font-medium">
+                                Pixelforge /v1/usage
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="font-mono tabular-nums">
+                        <tr
+                            v-for="day in report.days"
+                            :key="day.date"
+                            class="border-b last:border-0"
                             :class="{
-                                'text-destructive': isNegative(day.profit),
+                                'text-muted-foreground':
+                                    day.generations === 0 &&
+                                    !day.pixelforge?.generations,
                             }"
                         >
-                            {{ money(day.profit) }}
-                        </td>
-                        <td class="px-4 py-2 text-right">
-                            <span
-                                v-if="day.pixelforge"
-                                class="inline-flex items-center gap-1.5"
+                            <td class="px-4 py-2 font-sans">{{ day.date }}</td>
+                            <td class="px-4 py-2 text-right">
+                                {{ day.generations }}
+                            </td>
+                            <td class="px-4 py-2 text-right">
+                                {{ money(day.charged) }}
+                            </td>
+                            <td class="px-4 py-2 text-right">
+                                {{ money(day.provider_cost) }}
+                            </td>
+                            <td
+                                class="px-4 py-2 text-right"
+                                :class="{
+                                    'text-destructive': isNegative(day.profit),
+                                }"
                             >
-                                {{ money(day.pixelforge.cost) }}
-                                <span class="text-muted-foreground"
-                                    >({{ day.pixelforge.generations }})</span
+                                {{ money(day.profit) }}
+                            </td>
+                            <td class="px-4 py-2 text-right">
+                                <span
+                                    v-if="day.pixelforge"
+                                    class="inline-flex items-center gap-1.5"
                                 >
-                                <CircleCheck
-                                    v-if="day.matches_pixelforge"
-                                    class="size-3.5 text-accent-vivid"
-                                    aria-label="Matches"
-                                />
-                                <CircleX
+                                    {{ money(day.pixelforge.cost) }}
+                                    <span class="text-muted-foreground"
+                                        >({{
+                                            day.pixelforge.generations
+                                        }})</span
+                                    >
+                                    <CircleCheck
+                                        v-if="day.matches_pixelforge"
+                                        class="size-3.5 text-accent-vivid"
+                                        aria-label="Matches"
+                                    />
+                                    <CircleX
+                                        v-else
+                                        class="size-3.5 text-destructive"
+                                        aria-label="Does not match"
+                                    />
+                                </span>
+                                <span
                                     v-else
-                                    class="size-3.5 text-destructive"
-                                    aria-label="Does not match"
-                                />
-                            </span>
-                            <span v-else class="font-sans text-muted-foreground"
-                                >—</span
-                            >
-                        </td>
-                    </tr>
-                </tbody>
-                <tfoot class="font-mono font-semibold tabular-nums">
-                    <tr class="border-t">
-                        <td class="px-4 py-2 font-sans">Total</td>
-                        <td class="px-4 py-2 text-right">
-                            {{ report.total.generations }}
-                        </td>
-                        <td class="px-4 py-2 text-right">
-                            {{ money(report.total.charged) }}
-                        </td>
-                        <td class="px-4 py-2 text-right">
-                            {{ money(report.total.provider_cost) }}
-                        </td>
-                        <td class="px-4 py-2 text-right">
-                            {{ money(report.total.profit) }}
-                        </td>
-                        <td class="px-4 py-2 text-right">
-                            {{
-                                report.total.pixelforge
-                                    ? money(report.total.pixelforge.cost)
-                                    : '—'
-                            }}
-                        </td>
-                    </tr>
-                </tfoot>
-            </table>
+                                    class="font-sans text-muted-foreground"
+                                    >—</span
+                                >
+                            </td>
+                        </tr>
+                    </tbody>
+                    <tfoot class="font-mono font-semibold tabular-nums">
+                        <tr class="border-t">
+                            <td class="px-4 py-2 font-sans">Total</td>
+                            <td class="px-4 py-2 text-right">
+                                {{ report.total.generations }}
+                            </td>
+                            <td class="px-4 py-2 text-right">
+                                {{ money(report.total.charged) }}
+                            </td>
+                            <td class="px-4 py-2 text-right">
+                                {{ money(report.total.provider_cost) }}
+                            </td>
+                            <td class="px-4 py-2 text-right">
+                                {{ money(report.total.profit) }}
+                            </td>
+                            <td class="px-4 py-2 text-right">
+                                {{
+                                    report.total.pixelforge
+                                        ? money(report.total.pixelforge.cost)
+                                        : '—'
+                                }}
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
         </section>
 
-        <section class="overflow-x-auto rounded-xl border bg-card">
+        <section class="overflow-hidden rounded-xl border bg-card">
             <h2 class="border-b px-4 py-3 text-sm font-semibold">By user</h2>
             <p
                 v-if="!report.users.data.length"
@@ -354,47 +371,56 @@ const topSpenders = computed(() =>
             >
                 No completed generations in this period.
             </p>
-            <table v-else class="w-full text-sm">
-                <thead class="text-xs text-muted-foreground">
-                    <tr class="border-b">
-                        <th class="px-4 py-2 text-left font-medium">User</th>
-                        <th class="px-4 py-2 text-right font-medium">Images</th>
-                        <th class="px-4 py-2 text-right font-medium">
-                            Charged
-                        </th>
-                        <th class="px-4 py-2 text-right font-medium">
-                            Provider cost
-                        </th>
-                        <th class="px-4 py-2 text-right font-medium">Profit</th>
-                    </tr>
-                </thead>
-                <tbody class="font-mono tabular-nums">
-                    <tr
-                        v-for="row in report.users.data"
-                        :key="row.user.id"
-                        class="border-b last:border-0"
-                    >
-                        <td class="px-4 py-2 font-sans">
-                            {{ row.user.name }}
-                            <span class="block text-xs text-muted-foreground">{{
-                                row.user.email
-                            }}</span>
-                        </td>
-                        <td class="px-4 py-2 text-right">
-                            {{ row.generations }}
-                        </td>
-                        <td class="px-4 py-2 text-right">
-                            {{ money(row.charged) }}
-                        </td>
-                        <td class="px-4 py-2 text-right">
-                            {{ money(row.provider_cost) }}
-                        </td>
-                        <td class="px-4 py-2 text-right">
-                            {{ money(row.profit) }}
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+            <div v-else class="overflow-x-auto">
+                <table class="w-full text-sm whitespace-nowrap">
+                    <thead class="text-xs text-muted-foreground">
+                        <tr class="border-b">
+                            <th class="px-4 py-2 text-left font-medium">
+                                User
+                            </th>
+                            <th class="px-4 py-2 text-right font-medium">
+                                Images
+                            </th>
+                            <th class="px-4 py-2 text-right font-medium">
+                                Charged
+                            </th>
+                            <th class="px-4 py-2 text-right font-medium">
+                                Provider cost
+                            </th>
+                            <th class="px-4 py-2 text-right font-medium">
+                                Profit
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="font-mono tabular-nums">
+                        <tr
+                            v-for="row in report.users.data"
+                            :key="row.user.id"
+                            class="border-b last:border-0"
+                        >
+                            <td class="px-4 py-2 font-sans">
+                                {{ row.user.name }}
+                                <span
+                                    class="block text-xs text-muted-foreground"
+                                    >{{ row.user.email }}</span
+                                >
+                            </td>
+                            <td class="px-4 py-2 text-right">
+                                {{ row.generations }}
+                            </td>
+                            <td class="px-4 py-2 text-right">
+                                {{ money(row.charged) }}
+                            </td>
+                            <td class="px-4 py-2 text-right">
+                                {{ money(row.provider_cost) }}
+                            </td>
+                            <td class="px-4 py-2 text-right">
+                                {{ money(row.profit) }}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
             <div v-if="report.users.total" class="border-t px-4 py-3">
                 <Pagination
                     :current-page="report.users.current_page"

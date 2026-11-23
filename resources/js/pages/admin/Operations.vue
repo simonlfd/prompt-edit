@@ -227,14 +227,16 @@ const outcomeLabel: Record<string, string> = {
         </div>
 
         <!-- Webhook health -->
-        <section class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <section class="grid grid-cols-2 gap-3 lg:grid-cols-5">
             <div class="rounded-xl border bg-card p-4">
                 <p
                     class="flex items-center gap-1.5 text-xs text-muted-foreground"
                 >
                     <Webhook class="size-3.5" /> Events received
                 </p>
-                <p class="font-mono text-2xl font-medium tabular-nums">
+                <p
+                    class="font-mono text-xl font-medium tabular-nums sm:text-2xl"
+                >
                     {{ webhooks.received }}
                 </p>
                 <p class="text-xs text-muted-foreground">
@@ -252,7 +254,9 @@ const outcomeLabel: Record<string, string> = {
                 >
                     <Copy class="size-3.5" /> Duplicates ignored
                 </p>
-                <p class="font-mono text-2xl font-medium tabular-nums">
+                <p
+                    class="font-mono text-xl font-medium tabular-nums sm:text-2xl"
+                >
                     {{ webhooks.duplicates_ignored }}
                 </p>
                 <p class="text-xs text-muted-foreground">
@@ -265,7 +269,9 @@ const outcomeLabel: Record<string, string> = {
                 >
                     <ShieldCheck class="size-3.5" /> Out of order, ignored
                 </p>
-                <p class="font-mono text-2xl font-medium tabular-nums">
+                <p
+                    class="font-mono text-xl font-medium tabular-nums sm:text-2xl"
+                >
                     {{ webhooks.stale_ignored }}
                 </p>
                 <p class="text-xs text-muted-foreground">
@@ -278,17 +284,19 @@ const outcomeLabel: Record<string, string> = {
                 >
                     <RefreshCw class="size-3.5" /> Retried deliveries
                 </p>
-                <p class="font-mono text-2xl font-medium tabular-nums">
+                <p
+                    class="font-mono text-xl font-medium tabular-nums sm:text-2xl"
+                >
                     {{ webhooks.retried_deliveries }}
                 </p>
                 <p class="text-xs text-muted-foreground">
                     first seen on attempt 2+
                 </p>
             </div>
-            <div class="rounded-xl border bg-card p-4">
+            <div class="col-span-2 rounded-xl border bg-card p-4 lg:col-span-1">
                 <p class="text-xs text-muted-foreground">Unknown generation</p>
                 <p
-                    class="font-mono text-2xl font-medium tabular-nums"
+                    class="font-mono text-xl font-medium tabular-nums sm:text-2xl"
                     :class="{ 'text-warning': webhooks.unmatched }"
                 >
                     {{ webhooks.unmatched }}
@@ -340,9 +348,9 @@ const outcomeLabel: Record<string, string> = {
 
         <div class="grid gap-6 lg:grid-cols-2">
             <!-- Reconciliation -->
-            <section class="rounded-xl border bg-card">
+            <section class="min-w-0 rounded-xl border bg-card">
                 <div
-                    class="flex items-center justify-between border-b px-4 py-3"
+                    class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 border-b px-4 py-3"
                 >
                     <h2 class="text-sm font-semibold">
                         Costs vs Pixelforge
@@ -362,63 +370,73 @@ const outcomeLabel: Record<string, string> = {
                 >
                     Pixelforge usage is unavailable right now.
                 </p>
-                <table v-else class="w-full text-sm">
-                    <thead class="text-xs text-muted-foreground">
-                        <tr class="border-b">
-                            <th class="px-4 py-2 text-left font-medium">
-                                Date (UTC)
-                            </th>
-                            <th class="px-4 py-2 text-right font-medium">
-                                Ours
-                            </th>
-                            <th class="px-4 py-2 text-right font-medium">
-                                Pixelforge
-                            </th>
-                            <th class="px-4 py-2 text-right font-medium">
-                                <span class="sr-only">Match</span>
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody class="font-mono tabular-nums">
-                        <tr
-                            v-for="day in reconciliation.days"
-                            :key="day.date"
-                            class="border-b last:border-0"
-                        >
-                            <td class="px-4 py-2 font-sans">{{ day.date }}</td>
-                            <td class="px-4 py-2 text-right">
-                                {{ formatUsdExact(day.provider_cost) }}
-                                <span class="text-muted-foreground"
-                                    >({{ day.generations }})</span
-                                >
-                            </td>
-                            <td class="px-4 py-2 text-right">
-                                {{
-                                    day.pixelforge
-                                        ? formatUsdExact(day.pixelforge.cost)
-                                        : '—'
-                                }}
-                                <span
-                                    v-if="day.pixelforge"
-                                    class="text-muted-foreground"
-                                    >({{ day.pixelforge.generations }})</span
-                                >
-                            </td>
-                            <td class="px-4 py-2 text-right">
-                                <CircleCheck
-                                    v-if="day.matches_pixelforge"
-                                    class="ml-auto size-4 text-accent-vivid"
-                                    aria-label="Matches"
-                                />
-                                <CircleX
-                                    v-else-if="day.matches_pixelforge === false"
-                                    class="ml-auto size-4 text-destructive"
-                                    aria-label="Does not match"
-                                />
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div v-else class="overflow-x-auto">
+                    <table class="w-full text-sm whitespace-nowrap">
+                        <thead class="text-xs text-muted-foreground">
+                            <tr class="border-b">
+                                <th class="px-4 py-2 text-left font-medium">
+                                    Date (UTC)
+                                </th>
+                                <th class="px-4 py-2 text-right font-medium">
+                                    Ours
+                                </th>
+                                <th class="px-4 py-2 text-right font-medium">
+                                    Pixelforge
+                                </th>
+                                <th class="px-4 py-2 text-right font-medium">
+                                    <span class="sr-only">Match</span>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="font-mono tabular-nums">
+                            <tr
+                                v-for="day in reconciliation.days"
+                                :key="day.date"
+                                class="border-b last:border-0"
+                            >
+                                <td class="px-4 py-2 font-sans">
+                                    {{ day.date }}
+                                </td>
+                                <td class="px-4 py-2 text-right">
+                                    {{ formatUsdExact(day.provider_cost) }}
+                                    <span class="text-muted-foreground"
+                                        >({{ day.generations }})</span
+                                    >
+                                </td>
+                                <td class="px-4 py-2 text-right">
+                                    {{
+                                        day.pixelforge
+                                            ? formatUsdExact(
+                                                  day.pixelforge.cost,
+                                              )
+                                            : '—'
+                                    }}
+                                    <span
+                                        v-if="day.pixelforge"
+                                        class="text-muted-foreground"
+                                        >({{
+                                            day.pixelforge.generations
+                                        }})</span
+                                    >
+                                </td>
+                                <td class="px-4 py-2 text-right">
+                                    <CircleCheck
+                                        v-if="day.matches_pixelforge"
+                                        class="ml-auto size-4 text-accent-vivid"
+                                        aria-label="Matches"
+                                    />
+                                    <CircleX
+                                        v-else-if="
+                                            day.matches_pixelforge === false
+                                        "
+                                        class="ml-auto size-4 text-destructive"
+                                        aria-label="Does not match"
+                                    />
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
                 <p class="border-t px-4 py-2 text-xs text-muted-foreground">
                     <template v-if="reconciliation.last_check">
                         Automatic check (hourly) ran
@@ -448,7 +466,7 @@ const outcomeLabel: Record<string, string> = {
             </section>
 
             <!-- Generations -->
-            <section class="rounded-xl border bg-card">
+            <section class="min-w-0 rounded-xl border bg-card">
                 <h2 class="border-b px-4 py-3 text-sm font-semibold">
                     Generations
                 </h2>
@@ -502,7 +520,7 @@ const outcomeLabel: Record<string, string> = {
         </div>
 
         <!-- Event log -->
-        <section class="overflow-x-auto rounded-xl border bg-card">
+        <section class="overflow-hidden rounded-xl border bg-card">
             <h2 class="border-b px-4 py-3 text-sm font-semibold">
                 Webhook events
             </h2>
@@ -512,74 +530,88 @@ const outcomeLabel: Record<string, string> = {
             >
                 No webhooks yet.
             </p>
-            <table v-else class="w-full text-sm">
-                <thead class="text-xs text-muted-foreground">
-                    <tr class="border-b">
-                        <th class="px-4 py-2 text-left font-medium">
-                            Received
-                        </th>
-                        <th class="px-4 py-2 text-left font-medium">Event</th>
-                        <th class="px-4 py-2 text-left font-medium">
-                            Generation
-                        </th>
-                        <th class="px-4 py-2 text-right font-medium">
-                            Attempt
-                        </th>
-                        <th class="px-4 py-2 text-right font-medium">
-                            Duplicates
-                        </th>
-                        <th class="px-4 py-2 text-left font-medium">Outcome</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr
-                        v-for="e in events.data"
-                        :key="e.id"
-                        class="border-b last:border-0"
-                    >
-                        <td
-                            class="px-4 py-2 whitespace-nowrap text-muted-foreground"
-                            :title="absoluteTime(e.created_at)"
+            <div v-else class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="text-xs text-muted-foreground">
+                        <tr class="border-b">
+                            <th class="px-4 py-2 text-left font-medium">
+                                Received
+                            </th>
+                            <th class="px-4 py-2 text-left font-medium">
+                                Event
+                            </th>
+                            <th class="px-4 py-2 text-left font-medium">
+                                Generation
+                            </th>
+                            <th class="px-4 py-2 text-right font-medium">
+                                Attempt
+                            </th>
+                            <th class="px-4 py-2 text-right font-medium">
+                                Duplicates
+                            </th>
+                            <th class="px-4 py-2 text-left font-medium">
+                                Outcome
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr
+                            v-for="e in events.data"
+                            :key="e.id"
+                            class="border-b last:border-0"
                         >
-                            {{ relativeTime(e.created_at) }}
-                        </td>
-                        <td class="px-4 py-2">
-                            <span class="font-mono text-xs">{{ e.type }}</span
-                            ><span
-                                class="block font-mono text-[11px] text-muted-foreground"
-                                >{{ e.event_id }}</span
+                            <td
+                                class="px-4 py-2 whitespace-nowrap text-muted-foreground"
+                                :title="absoluteTime(e.created_at)"
                             >
-                        </td>
-                        <td
-                            class="max-w-xs truncate px-4 py-2"
-                            :title="e.prompt ?? undefined"
-                        >
-                            {{ e.prompt ?? e.provider_generation_id ?? '—' }}
-                        </td>
-                        <td class="px-4 py-2 text-right font-mono tabular-nums">
-                            {{ e.delivery_attempt ?? '—' }}
-                        </td>
-                        <td
-                            class="px-4 py-2 text-right font-mono tabular-nums"
-                            :class="{ 'font-semibold': e.duplicate_deliveries }"
-                        >
-                            {{ e.duplicate_deliveries || '—' }}
-                        </td>
-                        <td class="px-4 py-2">
-                            <span
-                                class="rounded-full px-2 py-0.5 text-xs whitespace-nowrap"
-                                :class="
-                                    outcomeStyle[e.outcome] ??
-                                    'bg-studio-choice'
-                                "
-                                >{{
-                                    outcomeLabel[e.outcome] ?? e.outcome
+                                {{ relativeTime(e.created_at) }}
+                            </td>
+                            <td class="px-4 py-2">
+                                <span class="font-mono text-xs">{{
+                                    e.type
                                 }}</span
+                                ><span
+                                    class="block font-mono text-[11px] text-muted-foreground"
+                                    >{{ e.event_id }}</span
+                                >
+                            </td>
+                            <td
+                                class="max-w-48 truncate px-4 py-2 sm:max-w-xs"
+                                :title="e.prompt ?? undefined"
                             >
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+                                {{
+                                    e.prompt ?? e.provider_generation_id ?? '—'
+                                }}
+                            </td>
+                            <td
+                                class="px-4 py-2 text-right font-mono tabular-nums"
+                            >
+                                {{ e.delivery_attempt ?? '—' }}
+                            </td>
+                            <td
+                                class="px-4 py-2 text-right font-mono tabular-nums"
+                                :class="{
+                                    'font-semibold': e.duplicate_deliveries,
+                                }"
+                            >
+                                {{ e.duplicate_deliveries || '—' }}
+                            </td>
+                            <td class="px-4 py-2">
+                                <span
+                                    class="rounded-full px-2 py-0.5 text-xs whitespace-nowrap"
+                                    :class="
+                                        outcomeStyle[e.outcome] ??
+                                        'bg-studio-choice'
+                                    "
+                                    >{{
+                                        outcomeLabel[e.outcome] ?? e.outcome
+                                    }}</span
+                                >
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
             <div class="border-t px-4 py-3">
                 <Pagination
                     :current-page="events.current_page"
