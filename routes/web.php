@@ -28,6 +28,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('generations.estimate');
 
     Route::get('gallery', GalleryController::class)->name('gallery');
+    Route::post('generations/{generation}/retry', [GenerationController::class, 'retry'])
+        ->middleware('throttle:20,1')
+        ->name('generations.retry');
     Route::put('generations/{generation}/favourite', [FavouriteController::class, 'update'])
         ->name('generations.favourite');
     Route::get('generations/{generation}/image', ImageController::class)->name('generations.image');

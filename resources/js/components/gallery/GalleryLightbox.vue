@@ -12,6 +12,7 @@ import {
 import { computed } from 'vue';
 import CostBreakdown from '@/components/studio/CostBreakdown.vue';
 import FavouriteButton from '@/components/studio/FavouriteButton.vue';
+import RetryButton from '@/components/studio/RetryButton.vue';
 import StatusPill from '@/components/studio/StatusPill.vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -153,6 +154,10 @@ function onKeydown(event: KeyboardEvent) {
                     </DialogDescription>
 
                     <div class="flex flex-wrap gap-2">
+                        <RetryButton
+                            v-if="g.status === 'failed'"
+                            :generation="g"
+                        />
                         <FavouriteButton
                             :generation="g"
                             show-label

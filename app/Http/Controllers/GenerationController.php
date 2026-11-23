@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Billing\InsufficientCreditsException;
 use App\Billing\Money;
 use App\Generations\CreateGeneration;
+use App\Generations\GenerationStatus;
 use App\Http\Requests\GenerationRequest;
 use App\Http\Resources\GenerationResource;
+use App\Models\Generation;
 use App\Pixelforge\PixelforgeException;
 use App\Pixelforge\PricingRepository;
 use Illuminate\Http\RedirectResponse;
@@ -73,5 +75,41 @@ class GenerationController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Generation started. Its status updates live.']);
 
         return back();
+    }
+
+    /**
+     * "Try again" on a failed generation: a brand-new generation with the same settings, estimated and
+     * reserved like any other. (Pixelforge says internal_error failures usually succeed on retry.)
+     */
+    public function retry(Request $request, Generation $generation, CreateGeneration $createGeneration): RedirectResponse
+    {
+        abort_unless($generation->user_id === $request->user()->id, 404);
+        abort_unless($generation->status === GenerationStatus::Failed, 422, 'Only failed generations can be retried.');
+
+        try {
+            $retry = $createGeneration->handle(
+                $request->user(),
+                $generation->prompt,
+                $generation->size,
+                $generation->quality,
+                $generation->reference_images,
+            );
+        } catch (InsufficientCreditsException $e) {
+            Inertia::flash('toast', ['type' => 'error', 'message' => sprintf(
+                'This could cost up to %s and you have %s. Buy credits to try again.',
+                Money::format($e->requiredNanos),
+                Money::format($e->balanceNanos),
+            )]);
+
+            return back();
+        } catch (PixelforgeException) {
+            Inertia::flash('toast', ['type' => 'error', 'message' => 'We can’t reach Pixelforge right now. Try again in a minute.']);
+
+            return back();
+        }
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Trying again with the same settings.']);
+
+        return to_route('dashboard', ['g' => $retry->id]);
     }
 }

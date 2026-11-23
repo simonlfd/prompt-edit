@@ -99,3 +99,28 @@ it('gives new users welcome credit', function () {
 
     expect(User::where('email', 'new@example.com')->sole()->balance_nanos)->toBe(2_000_000_000);
 });
+
+it('retries a failed generation as a new, separately reserved generation', function () {
+    $failed = pendingGeneration();
+    sendWebhook($this, webhookEvent($failed, 'failed', 'evt_f'))->assertOk();
+    $balance = $failed->user->fresh()->balance_nanos;
+
+    $response = $this->actingAs($failed->user)->post(route('generations.retry', $failed));
+
+    $retry = Generation::where('id', '!=', $failed->id)->sole();
+    $response->assertRedirect(route('dashboard', ['g' => $retry->id]));
+    expect($retry->prompt)->toBe($failed->prompt)
+        ->and($retry->size)->toBe($failed->size)
+        ->and($retry->reference_images)->toBe($failed->reference_images)
+        ->and($retry->status)->toBe(GenerationStatus::Pending)
+        ->and($failed->user->fresh()->balance_nanos)->toBe($balance - $retry->max_charge_nanos)
+        ->and($failed->fresh()->status)->toBe(GenerationStatus::Failed);
+    Queue::assertPushed(SubmitGeneration::class, fn ($job) => $job->generationId === $retry->id);
+});
+
+it('only retries failed generations, and only your own', function () {
+    $ok = pendingGeneration();
+
+    $this->actingAs($ok->user)->post(route('generations.retry', $ok))->assertStatus(422);
+    $this->actingAs(User::factory()->create())->post(route('generations.retry', $ok))->assertNotFound();
+});

@@ -2,6 +2,7 @@
 import { Copy, Download, RotateCcw } from '@lucide/vue';
 import { computed } from 'vue';
 import FavouriteButton from '@/components/studio/FavouriteButton.vue';
+import RetryButton from '@/components/studio/RetryButton.vue';
 import { Button } from '@/components/ui/button';
 import { useGenerationActions } from '@/composables/useGenerationActions';
 import { imageAvailable } from '@/lib/generation';
@@ -16,6 +17,10 @@ const canDownload = computed(() => imageAvailable(props.generation, props.now));
 
 <template>
     <div class="flex flex-wrap items-center gap-2">
+        <RetryButton
+            v-if="generation.status === 'failed'"
+            :generation="generation"
+        />
         <FavouriteButton
             :generation="generation"
             show-label
