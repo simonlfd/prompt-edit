@@ -52,6 +52,12 @@ class ApplyProviderState
             $generation->started_at = $this->time($object['started_at'] ?? null) ?? $generation->started_at;
             $generation->next_attempt_at = null;
 
+            if ($incoming !== GenerationStatus::Failed) {
+                // Pixelforge accepted it, so any "waiting for capacity" error from earlier attempts is over.
+                $generation->error_code = null;
+                $generation->error_message = null;
+            }
+
             match ($incoming) {
                 GenerationStatus::Succeeded => $this->succeed($generation, $object),
                 GenerationStatus::Failed => $this->fail($generation, $object['error']['code'] ?? 'generation_failed', $object['error']['message'] ?? null, $object),

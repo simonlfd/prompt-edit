@@ -56,6 +56,7 @@ it('never records the same event twice', function () {
     sendWebhook($this, $event)->assertOk()->assertJson(['outcome' => 'duplicate']);
 
     expect(WebhookEvent::count())->toBe(1)
+        ->and(WebhookEvent::sole()->duplicate_deliveries)->toBe(1)
         ->and(CreditTransaction::where('type', 'charge')->count())->toBe(1)
         ->and($this->user->fresh()->balance_nanos)->toBe(10_000_000_000 - 381_887_500);
 });
@@ -132,4 +133,12 @@ it('keeps the balance equal to the sum of the ledger', function () {
     expect($this->user->fresh()->balance_nanos)->toBe(
         10_000_000_000 + (int) CreditTransaction::where('user_id', $this->user->id)->sum('amount_nanos')
     );
+});
+
+it('clears the waiting-for-capacity error once Pixelforge accepts the generation', function () {
+    $this->generation->forceFill(['error_code' => 'concurrency_limit_exceeded', 'error_message' => 'Too many'])->save();
+
+    sendWebhook($this, webhookEvent($this->generation, 'processing', 'evt_1'))->assertOk();
+
+    expect($this->generation->fresh()->error_code)->toBeNull();
 });

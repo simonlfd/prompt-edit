@@ -39,6 +39,9 @@ class HandleWebhookEvent
             ]);
 
             if ($inserted === 0) {
+                // Already recorded: count the re-delivery for visibility, change nothing else.
+                WebhookEvent::where('event_id', $event['id'])->increment('duplicate_deliveries');
+
                 return self::DUPLICATE;
             }
 

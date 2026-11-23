@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $generation_id
  * @property int|null $delivery_attempt
  * @property string $outcome
+ * @property int $duplicate_deliveries
  * @property array<string, mixed> $payload
  */
 class WebhookEvent extends Model
