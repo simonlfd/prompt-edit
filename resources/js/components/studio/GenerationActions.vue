@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Copy, Download, RotateCcw } from '@lucide/vue';
 import { computed } from 'vue';
-import FavouriteButton from '@/components/studio/FavouriteButton.vue';
 import RetryButton from '@/components/studio/RetryButton.vue';
 import { Button } from '@/components/ui/button';
 import { useGenerationActions } from '@/composables/useGenerationActions';
@@ -10,7 +9,7 @@ import type { Generation } from '@/types';
 
 const props = defineProps<{ generation: Generation; now: number }>();
 const emit = defineEmits<{ reuse: [Generation] }>();
-const { copyPrompt, downloadUrl } = useGenerationActions();
+const { copyPrompt } = useGenerationActions();
 
 const canDownload = computed(() => imageAvailable(props.generation, props.now));
 </script>
@@ -21,18 +20,8 @@ const canDownload = computed(() => imageAvailable(props.generation, props.now));
             v-if="generation.status === 'failed'"
             :generation="generation"
         />
-        <FavouriteButton
-            :generation="generation"
-            show-label
-            class="h-9 border bg-card px-3 hover:bg-accent"
-        />
-        <Button v-if="canDownload" variant="outline" as-child>
-            <a :href="downloadUrl(generation)" download>
-                <Download /> Download
-            </a>
-        </Button>
         <Button
-            v-else-if="generation.status === 'succeeded'"
+            v-if="generation.status === 'succeeded' && !canDownload"
             variant="outline"
             disabled
             title="Pixelforge keeps images for 24 hours"

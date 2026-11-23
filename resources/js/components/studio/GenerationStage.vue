@@ -1,12 +1,23 @@
 <script setup lang="ts">
-import { Check, Clock, ImageOff, Sparkles, TriangleAlert } from '@lucide/vue';
+import {
+    Check,
+    Clock,
+    Download,
+    ImageOff,
+    Sparkles,
+    TriangleAlert,
+} from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 import CostBreakdown from '@/components/studio/CostBreakdown.vue';
+import FavouriteButton from '@/components/studio/FavouriteButton.vue';
 import GenerationActions from '@/components/studio/GenerationActions.vue';
 import StatusPill from '@/components/studio/StatusPill.vue';
+import { Button } from '@/components/ui/button';
+import { useGenerationActions } from '@/composables/useGenerationActions';
 import {
-    aspectClass,
     expiresIn,
+    frameStyle,
+    imageAvailable,
     formatDuration,
     formatElapsed,
     isInFlight,
@@ -29,6 +40,7 @@ watch(
 );
 
 const g = computed(() => props.generation);
+const { downloadUrl } = useGenerationActions();
 
 const timing = computed(() => {
     if (!g.value) {
@@ -98,13 +110,33 @@ const expiry = computed(() =>
         :aria-label="`Current image: ${g.prompt}`"
         aria-live="polite"
     >
-        <div class="flex items-center justify-between gap-3 border-b px-4 py-3">
-            <StatusPill :generation="g" />
-            <span
-                class="inline-flex items-center gap-1.5 font-mono text-xs text-muted-foreground tabular-nums"
-            >
-                <Clock class="size-3.5" />{{ timing }}
-            </span>
+        <div
+            class="flex items-center justify-between gap-3 border-b px-4 py-2.5"
+        >
+            <div class="flex min-w-0 items-center gap-3">
+                <StatusPill :generation="g" />
+                <span
+                    class="inline-flex items-center gap-1.5 font-mono text-xs text-muted-foreground tabular-nums"
+                >
+                    <Clock class="size-3.5" />{{ timing }}
+                </span>
+            </div>
+            <!-- Always at the top of the card, whatever the image's shape. -->
+            <div class="flex items-center gap-1.5">
+                <FavouriteButton
+                    :generation="g"
+                    show-label
+                    class="h-8 border bg-card px-2.5 hover:bg-accent"
+                />
+                <Button
+                    v-if="imageAvailable(g, now)"
+                    size="sm"
+                    variant="outline"
+                    as-child
+                >
+                    <a :href="downloadUrl(g)" download><Download /> Download</a>
+                </Button>
+            </div>
         </div>
 
         <!-- The image, or what's happening instead -->
@@ -112,8 +144,8 @@ const expiry = computed(() =>
             class="flex items-center justify-center bg-studio-page-alt p-4 md:p-6"
         >
             <div
-                class="relative w-full max-w-[min(100%,36rem)] overflow-hidden rounded-xl"
-                :class="aspectClass(g.size)"
+                class="relative overflow-hidden rounded-xl"
+                :style="frameStyle(g.size, 'min(52dvh, 34rem)')"
             >
                 <img
                     v-if="

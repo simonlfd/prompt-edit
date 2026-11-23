@@ -27,11 +27,24 @@ export function imageAvailable(
     );
 }
 
-/** Tailwind aspect class for a "1536x1024"-style size. */
-export function aspectClass(size: string): string {
+/**
+ * Size an image frame so it fits BOTH the available width and a maximum height, keeping the
+ * image's aspect ratio. Width alone would make a portrait (2:3) frame 1.5× taller than it is wide
+ * and push everything below it off screen.
+ *
+ * @param maxHeight any CSS length, e.g. "min(58dvh, 34rem)"
+ */
+export function frameStyle(
+    size: string,
+    maxHeight: string,
+): Record<string, string> {
     const [w, h] = size.split('x').map(Number);
+    const ratio = w && h ? w / h : 1;
 
-    return w === h ? 'aspect-square' : w > h ? 'aspect-[3/2]' : 'aspect-[2/3]';
+    return {
+        aspectRatio: `${w || 1} / ${h || 1}`,
+        width: `min(100%, calc(${maxHeight} * ${ratio}))`,
+    };
 }
 
 /** What's happening right now, in a few words. */

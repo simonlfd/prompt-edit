@@ -22,7 +22,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { useGenerationActions } from '@/composables/useGenerationActions';
-import { aspectClass, expiresIn, imageAvailable } from '@/lib/generation';
+import { expiresIn, frameStyle, imageAvailable } from '@/lib/generation';
 import { absoluteTime } from '@/lib/time';
 import { dashboard } from '@/routes';
 import type { Generation } from '@/types';
@@ -81,8 +81,8 @@ function onKeydown(event: KeyboardEvent) {
                     class="relative flex items-center justify-center bg-studio-page-alt p-4 md:p-6"
                 >
                     <div
-                        class="w-full max-w-xl overflow-hidden rounded-xl"
-                        :class="aspectClass(g.size)"
+                        class="overflow-hidden rounded-xl"
+                        :style="frameStyle(g.size, 'min(78dvh, 40rem)')"
                     >
                         <img
                             v-if="g.status === 'succeeded' && g.image_url"

@@ -59,6 +59,13 @@ watch(
     (newest, previous) => {
         if (newest && newest !== previous) {
             selectedId.value = newest;
+
+            // On narrow screens the stage sits below the form: bring the new image into view.
+            if (previous && window.matchMedia('(max-width: 1023px)').matches) {
+                document
+                    .getElementById('stage')
+                    ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
         }
     },
 );
@@ -175,7 +182,11 @@ const title = computed(() =>
                 />
             </section>
 
-            <section aria-label="Current image" class="min-w-0">
+            <section
+                id="stage"
+                aria-label="Current image"
+                class="min-w-0 scroll-mt-4"
+            >
                 <GenerationStage
                     :generation="current"
                     :now="now"
