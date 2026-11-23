@@ -6,6 +6,8 @@ PromptEdit's take-home assessment: an image-generation app on Laravel 13, Vue 3 
 **Pixelforge**, a simulated AI provider. It charges users Pixelforge's exact cost plus 25%, never charges twice, never
 charges for failures, and keeps working through rate limits, overloads and duplicate or out-of-order webhooks.
 
+**Live app:** https://prompt-edit-production-lgdsai.laravel.cloud
+
 The reasoning behind each choice is in **[DECISIONS.md](DECISIONS.md)**. The UI follows
 [docs/style-guide.md](docs/style-guide.md).
 
@@ -13,8 +15,13 @@ The reasoning behind each choice is in **[DECISIONS.md](DECISIONS.md)**. The UI 
 
 ## For reviewers: verify it in 5 minutes
 
-Log in with the reviewer account from the application form (an admin with $25 of credit), or sign up for your own
-account, which starts with $2.
+Log in at the live app with the reviewer account from the application form (an admin with $25 of credit), or sign up
+for your own account, which starts with $2.
+
+**Already there:** the reviewer account holds a finished test round, so you can compare with Pixelforge's records straight
+away: five succeeded generations in different sizes and qualities (one with a reference image, one `[duplicate]`, one
+`[slow]`) and two free failures (`[fail]`, `[blocked]`). Their provider cost matches `GET /v1/usage` for the production key
+to the last digit.
 
 **1. Generate and watch the money.** In **Studio**, type a prompt. The estimate updates as you type and shows a min–max
 range ("How it's calculated" opens the token maths). Generate it: the stage shows live progress and a timer, then
@@ -37,12 +44,29 @@ charge entries behind it.
 
 - **Spend report**: credit spend, provider cost and profit per UTC day and per user, with Pixelforge's own
   `GET /v1/usage` figure beside each day and a ✓ when they match exactly (they're compared as 9-decimal strings).
+  Charts show each day's charge split into Pixelforge's cost and our margin, and the top spenders.
 - **Operations**: every webhook with its outcome (applied, out-of-order and ignored, duplicate count), retried
-  deliveries, failures by reason, and an hourly automatic reconciliation against Pixelforge.
+  deliveries, failures by reason, hourly charts of outcomes and webhook handling, and an hourly automatic reconciliation
+  against Pixelforge.
 
 **4. Look around.** **Gallery** has filters (favourites, ready, failed), sort by cost, a keyboard-navigable lightbox and
 downloads named after the prompt. Images are copied to our own storage, so they still load days after Pixelforge's
 24-hour links expire.
+
+### Good to know
+
+- **Pixelforge limits are per account, across keys:** 3 concurrent generations and 60 requests a minute. If several of
+  you generate at once, some generations will show **Waiting for capacity** and then go through. That's the app working
+  as designed, not a fault.
+- **A brand-new generation can briefly show ✗ in the spend report.** The report caches Pixelforge's usage for 30 seconds,
+  and Pixelforge only counts a generation once it completes. Refresh after a minute and it matches.
+- **Days are UTC**, and a generation counts on the day it completed, because that's how Pixelforge's usage report buckets
+  costs.
+- **Images are placeholders.** Pixelforge is simulated, so every image is an abstract pattern captioned with its prompt.
+  We keep our own private copy, so they keep loading after Pixelforge's 24-hour links expire.
+- **Credits are fake.** "Buy credits" adds $5, $10 or $25 without taking a payment.
+- **Production has its own Pixelforge key**, separate from development, so its usage report contains only the live app's
+  generations.
 
 ---
 
@@ -58,7 +82,7 @@ downloads named after the prompt. Images are copied to our own storage, so they 
 | Stretch: balances, buy credits, block when unaffordable                  | `CreditLedger` (reserve the worst case, settle on completion), Billing page |
 
 Beyond the brief: our own copies of images, favourites, a gallery with downloads, "try again" and "reuse settings",
-a Billing ledger, an Operations page, and a test that runs **all 240 orderings** of duplicate and out-of-order
+a Billing ledger, an Operations page, admin charts, and a test that runs **all 240 orderings** of duplicate and out-of-order
 deliveries.
 
 ## How it fits together
@@ -112,7 +136,7 @@ php artisan app:create-reviewer you@example.com   # admin login with $25, prints
 
 ```bash
 composer ci:check     # everything CI runs: lint, PHPStan, vue-tsc, tests
-php artisan test      # 355 Pest tests, including 240 delivery orderings
+php artisan test      # 364 Pest tests, including 240 delivery orderings
 ```
 
 ## Deploying (Laravel Cloud)
