@@ -41,6 +41,7 @@ class OperationsController extends Controller
                 'images_not_saved' => Generation::where('status', GenerationStatus::Succeeded)->whereNull('image_path')->count(),
                 'failures' => Generation::where('status', GenerationStatus::Failed)
                     ->where('completed_at', '>=', $since)
+                    ->toBase() // Plain rows, not Generation models: this is an aggregate.
                     ->selectRaw('error_code, count(*) as count')
                     ->groupBy('error_code')
                     ->orderByDesc('count')
