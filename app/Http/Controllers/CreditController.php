@@ -7,6 +7,7 @@ use App\Billing\Money;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Inertia\Inertia;
 
 /** Fake purchase: no payment, just a ledger entry. */
 class CreditController extends Controller
@@ -19,6 +20,8 @@ class CreditController extends Controller
 
         $ledger->purchase($request->user(), $data['amount'] * Money::NANOS_PER_DOLLAR, "Bought \${$data['amount']} of credits");
 
-        return back()->with('success', "Added \${$data['amount']}.00 to your balance.");
+        Inertia::flash('toast', ['type' => 'success', 'message' => "Added \${$data['amount']}.00 to your balance."]);
+
+        return back();
     }
 }

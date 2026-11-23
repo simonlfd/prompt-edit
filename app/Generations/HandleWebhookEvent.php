@@ -74,7 +74,7 @@ class HandleWebhookEvent
     {
         $ourId = $object['metadata']['generation_id'] ?? null;
 
-        return ($ourId ? Generation::find($ourId) : null)
+        return ($ourId ? Generation::whereKey($ourId)->first() : null)
             ?? Generation::where('provider_id', $object['id'])->first();
     }
 }

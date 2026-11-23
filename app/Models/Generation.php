@@ -88,7 +88,11 @@ class Generation extends Model
         return $this->usage ? TokenUsage::fromProvider($this->usage) : null;
     }
 
-    /** The request body for POST /v1/generations. */
+    /**
+     * The request body for POST /v1/generations.
+     *
+     * @return array<string, mixed>
+     */
     public function toProviderRequest(): array
     {
         return array_filter([

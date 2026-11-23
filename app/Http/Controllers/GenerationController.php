@@ -61,6 +61,8 @@ class GenerationController extends Controller
             return back()->withErrors(['prompt' => 'We can’t reach Pixelforge’s price list right now, so we can’t price this. Try again in a minute.']);
         }
 
-        return back()->with('success', 'Generation started. You’ll see it below as it progresses.');
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Generation started. Its status updates live.']);
+
+        return back();
     }
 }

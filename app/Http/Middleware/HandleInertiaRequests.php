@@ -45,9 +45,6 @@ class HandleInertiaRequests extends Middleware
             ],
             // A closure so partial reloads (e.g. polling for status) can refresh just the balance.
             'balance' => fn () => $request->user() ? Money::toDecimal($request->user()->fresh()->balance_nanos) : null,
-            'flash' => [
-                'success' => fn () => $request->session()->get('success'),
-            ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }

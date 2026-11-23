@@ -23,7 +23,7 @@ it('shows the studio with the user’s generations and balance', function () {
             ->where('generations.data.0.id', $generation->id)
             ->where('generations.data.0.status', 'pending')
             ->where('options.sizes', ['1024x1024', '1536x1024', '1024x1536'])
-            ->where('balance', '9.532656250'));
+            ->where('balance', '9.542850000')); // $10 − max charge: (14×5 + 765×10 + 6450×40 + 8000×12.5)/1M × 1.25
 });
 
 it('creates a generation, holds its worst-case cost and queues the submission', function () {

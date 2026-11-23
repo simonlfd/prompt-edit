@@ -8,6 +8,7 @@ use App\Models\Generation;
 use App\Pixelforge\PixelforgeClient;
 use App\Pixelforge\PixelforgeException;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
 
 /**
@@ -67,8 +68,11 @@ class SpendReport
         ];
     }
 
-    /** @return array{generations: int, charged_nanos: int, provider_nanos: int} */
-    private function totals($rows): array
+    /**
+     * @param  Collection<int, Generation>  $rows
+     * @return array{generations: int, charged_nanos: int, provider_nanos: int}
+     */
+    private function totals(Collection $rows): array
     {
         return [
             'generations' => $rows->count(),
@@ -77,7 +81,10 @@ class SpendReport
         ];
     }
 
-    /** @param array<string, mixed> $row */
+    /**
+     * @param  array<string, mixed>  $row
+     * @return array<string, mixed>
+     */
     private function present(array $row): array
     {
         $pixelforge = $row['pixelforge'] ?? null;

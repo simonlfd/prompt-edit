@@ -8,8 +8,8 @@ use App\Jobs\SubmitGeneration;
 use App\Models\Generation;
 use App\Pixelforge\PixelforgeClient;
 use App\Pixelforge\PixelforgeException;
-use Symfony\Component\Console\Attribute\AsCommand;
 use Illuminate\Console\Command;
+use Symfony\Component\Console\Attribute\AsCommand;
 
 /**
  * Safety net for missed webhooks (delivery isn't guaranteed) and lost submit jobs. Runs every minute.

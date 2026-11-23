@@ -3,6 +3,7 @@
 namespace App\Generations;
 
 use App\Billing\CreditLedger;
+use App\Billing\InsufficientCreditsException;
 use App\Billing\PricingCalculator;
 use App\Jobs\SubmitGeneration;
 use App\Models\Generation;
@@ -23,7 +24,7 @@ class CreateGeneration
      *
      * @param  list<string>  $referenceImages
      *
-     * @throws \App\Billing\InsufficientCreditsException
+     * @throws InsufficientCreditsException
      */
     public function handle(User $user, string $prompt, string $size, string $quality, array $referenceImages): Generation
     {
@@ -37,7 +38,7 @@ class CreateGeneration
                 'prompt' => $prompt,
                 'size' => $size,
                 'quality' => $quality,
-                'reference_images' => array_values($referenceImages),
+                'reference_images' => $referenceImages,
                 'rates' => $pricing->rates->toArray(), // Replaced by the rates Pixelforge fixes on the generation.
                 'estimated_provider_nanos' => $estimate->expectedProviderNanos,
                 'estimated_charge_nanos' => $estimate->expectedChargeNanos,

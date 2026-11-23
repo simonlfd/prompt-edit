@@ -34,13 +34,21 @@ class PixelforgeClient
         return $this->send(fn (PendingRequest $http) => $http->get('generations/'.rawurlencode($providerId)));
     }
 
-    /** GET /v1/pricing (no auth needed). @return array<string, mixed> */
+    /**
+     * GET /v1/pricing (no auth needed).
+     *
+     * @return array<string, mixed>
+     */
     public function pricing(): array
     {
         return $this->send(fn (PendingRequest $http) => $http->get('pricing'));
     }
 
-    /** GET /v1/usage for this key, per UTC day. @return array<string, mixed> */
+    /**
+     * GET /v1/usage for this key, per UTC day.
+     *
+     * @return array<string, mixed>
+     */
     public function usage(string $startDate, string $endDate): array
     {
         return $this->send(fn (PendingRequest $http) => $http->get('usage', [
