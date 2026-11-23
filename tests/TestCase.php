@@ -3,14 +3,18 @@
 namespace Tests;
 
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
-use Laravel\Fortify\Features;
+use Illuminate\Support\Facades\Http;
 
 abstract class TestCase extends BaseTestCase
 {
-    protected function skipUnlessFortifyHas(string $feature, ?string $message = null): void
+    protected function setUp(): void
     {
-        if (! Features::enabled($feature)) {
-            $this->markTestSkipped($message ?? "Fortify feature [{$feature}] is not enabled.");
-        }
+        parent::setUp();
+
+        // Never talk to the real Pixelforge from tests; serve the documented price list by default.
+        configurePixelforge();
+        config(['inertia.ssr.enabled' => false]);
+        Http::preventStrayRequests();
+        Http::fake([PF.'/pricing' => Http::response(pricingResponse())]);
     }
 }

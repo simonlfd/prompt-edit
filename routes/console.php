@@ -1,8 +1,12 @@
 <?php
 
-use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schedule;
 
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote');
+Schedule::command('generations:reconcile')->everyMinute()->withoutOverlapping();
+
+Artisan::command('user:make-admin {email}', function (string $email) {
+    $user = App\Models\User::where('email', $email)->firstOrFail();
+    $user->forceFill(['is_admin' => true])->save();
+    $this->info("{$user->email} is now an admin.");
+})->purpose('Give a user access to the admin spend report');

@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Billing\Money;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -40,6 +41,12 @@ class HandleInertiaRequests extends Middleware
             'name' => config('app.name'),
             'auth' => [
                 'user' => $request->user(),
+                'is_admin' => (bool) $request->user()?->is_admin,
+            ],
+            // A closure so partial reloads (e.g. polling for status) can refresh just the balance.
+            'balance' => fn () => $request->user() ? Money::toDecimal($request->user()->fresh()->balance_nanos) : null,
+            'flash' => [
+                'success' => fn () => $request->session()->get('success'),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];

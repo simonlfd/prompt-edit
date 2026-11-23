@@ -2,7 +2,12 @@
 
 namespace App\Providers;
 
+use App\Billing\PricingCalculator;
+use App\Models\User;
+use App\Pixelforge\PixelforgeClient;
+use App\Pixelforge\WebhookSignature;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
@@ -15,7 +20,19 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(PixelforgeClient::class, fn () => new PixelforgeClient(
+            baseUrl: config('services.pixelforge.base_url'),
+            apiKey: config('services.pixelforge.api_key'),
+        ));
+
+        $this->app->singleton(WebhookSignature::class, fn () => new WebhookSignature(
+            secret: (string) config('services.pixelforge.webhook_secret'),
+            toleranceSeconds: (int) config('services.pixelforge.webhook_tolerance_seconds'),
+        ));
+
+        $this->app->singleton(PricingCalculator::class, fn () => new PricingCalculator(
+            markupPercent: (int) config('billing.markup_percent'),
+        ));
     }
 
     /**
@@ -24,6 +41,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+
+        Gate::define('admin', fn (User $user): bool => (bool) $user->is_admin);
     }
 
     /**
