@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
 import {
+    Activity,
     BookOpen,
     ChartColumn,
     FolderGit2,
@@ -22,7 +23,7 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard, gallery } from '@/routes';
-import { report } from '@/routes/admin';
+import { operations, report } from '@/routes/admin';
 import type { NavItem } from '@/types';
 
 const page = usePage();
@@ -31,7 +32,10 @@ const mainNavItems = computed<NavItem[]>(() => [
     { title: 'Studio', href: dashboard(), icon: Sparkles },
     { title: 'Gallery', href: gallery(), icon: Images },
     ...(page.props.auth.is_admin
-        ? [{ title: 'Spend report', href: report(), icon: ChartColumn }]
+        ? [
+              { title: 'Spend report', href: report(), icon: ChartColumn },
+              { title: 'Operations', href: operations(), icon: Activity },
+          ]
         : []),
 ]);
 

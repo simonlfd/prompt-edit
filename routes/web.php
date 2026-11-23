@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\OperationsController;
 use App\Http\Controllers\Admin\SpendReportController;
 use App\Http\Controllers\CreditController;
 use App\Http\Controllers\DownloadController;
@@ -37,9 +38,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('throttle:10,1')
         ->name('credits.store');
 
-    Route::get('admin/report', SpendReportController::class)
-        ->middleware('can:admin')
-        ->name('admin.report');
+    Route::middleware('can:admin')->prefix('admin')->name('admin.')->group(function () {
+        Route::get('report', SpendReportController::class)->name('report');
+        Route::get('operations', OperationsController::class)->name('operations');
+    });
 });
 
 require __DIR__.'/settings.php';
